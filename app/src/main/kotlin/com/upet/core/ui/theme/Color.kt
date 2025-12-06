@@ -1,4 +1,4 @@
-package com.cnvx.upet.ui.theme
+package com.upet.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
