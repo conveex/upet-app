@@ -1,6 +1,5 @@
 package com.upet.presentation.auth.register_client
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

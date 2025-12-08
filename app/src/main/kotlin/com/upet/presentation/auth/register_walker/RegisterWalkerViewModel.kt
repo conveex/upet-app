@@ -1,13 +1,11 @@
 package com.upet.presentation.auth.register_walker
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.upet.data.remote.ApiService
-import com.upet.data.remote.dto.RegisterClientRequest
 import com.upet.data.remote.dto.RegisterWalkerRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
