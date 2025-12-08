@@ -1,5 +1,6 @@
 package com.upet.ui.screens.auth
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -8,9 +9,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.upet.presentation.auth.register_client.RegisterClientViewModel
 import com.upet.ui.theme.UPetColors
 
 @Composable
@@ -18,11 +22,38 @@ fun RegisterClientScreen(
     onRegisterSuccess: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    val contexto = LocalContext.current
+    val viewModel: RegisterClientViewModel = hiltViewModel()
+
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    var showSuccessMessage by remember { mutableStateOf(false) }
+
+    val isLoading = viewModel.isLoading
+    val error = viewModel.errorMessage
+    val success = viewModel.successMessage // CAMBIO: leer éxito
+
+    // Mostrar error
+    LaunchedEffect(error) {
+        if (error != null) {
+            Toast.makeText(contexto, error, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    // CAMBIO: Mostrar éxito y navegar
+    LaunchedEffect(success) {
+        if (success != null) {
+            Toast.makeText(contexto, success, Toast.LENGTH_LONG).show()
+
+            // Pequeño delay para que el Toast se vea antes de navegar
+            kotlinx.coroutines.delay(800)
+
+            onRegisterSuccess()
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -33,7 +64,6 @@ fun RegisterClientScreen(
                 .fillMaxSize()
                 .padding(24.dp)
         ) {
-            // Top bar
             IconButton(onClick = onNavigateBack) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
             }
@@ -48,113 +78,92 @@ fun RegisterClientScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Nombre
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
                 label = { Text("Nombre completo") },
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = UPetColors.Primary,
-                    focusedLabelColor = UPetColors.Primary
-                )
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Email
+            OutlinedTextField(
+                value = phone,
+                onValueChange = { phone = it },
+                label = { Text("Número telefónico") },
+                leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = address,
+                onValueChange = { address = it },
+                label = { Text("Dirección") },
+                leadingIcon = { Icon(Icons.Default.AddLocation, contentDescription = null) },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Correo electrónico") },
                 leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = UPetColors.Primary,
-                    focusedLabelColor = UPetColors.Primary
-                )
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Contraseña
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Contraseña") },
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                 visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = UPetColors.Primary,
-                    focusedLabelColor = UPetColors.Primary
-                )
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Confirmar contraseña
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
                 label = { Text("Confirmar contraseña") },
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                 visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = UPetColors.Primary,
-                    focusedLabelColor = UPetColors.Primary
-                )
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Botón registrar
             Button(
                 onClick = {
-                    showSuccessMessage = true
-                    // TODO: Implementar registro
+                    viewModel.registerClient(
+                        name = name,
+                        email = email,
+                        password = password,
+                        phone = phone,
+                        mainAddress = address,
+                        onSuccess = {
+                            // CAMBIO: ya NO navegamos aquí,
+                            // porque ahora la navegación ocurre en LaunchedEffect(success)
+                        }
+                    )
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = UPetColors.Primary
-                ),
-                enabled = name.isNotEmpty() && email.isNotEmpty() && 
-                         password.isNotEmpty() && password == confirmPassword
+                enabled = !isLoading &&
+                        name.isNotEmpty() &&
+                        email.isNotEmpty() &&
+                        password.isNotEmpty() &&
+                        password == confirmPassword
             ) {
                 Text("Registrar")
-            }
-
-            if (showSuccessMessage) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = UPetColors.Secondary
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            tint = UPetColors.Primary
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            "Verifica tu correo para activar la cuenta",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
             }
         }
     }

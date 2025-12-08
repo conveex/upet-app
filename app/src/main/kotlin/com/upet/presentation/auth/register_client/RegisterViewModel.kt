@@ -1,4 +1,4 @@
-package com.upet.presentation.auth.register_walker
+package com.upet.presentation.auth.register_client
 
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -8,13 +8,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.upet.data.remote.ApiService
 import com.upet.data.remote.dto.RegisterClientRequest
-import com.upet.data.remote.dto.RegisterWalkerRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class RegisterWalkerViewModel @Inject constructor(
+class RegisterClientViewModel @Inject constructor(
     private val api: ApiService
 ) : ViewModel() {
 
@@ -28,20 +27,12 @@ class RegisterWalkerViewModel @Inject constructor(
     var successMessage by mutableStateOf<String?>(null)
         private set
 
-    fun registerWalker(
+    fun registerClient(
         name: String,
-        bio: String,
         email: String,
         password: String,
-        zone: String,
         phone: String,
-        address: String,
-        experience: String,
-        serviceZoneLabel: String,
-        serviceCenterLat: String,
-        serviceCenterLng: String,
-        zoneRadiusKm: String,
-        maxDogsPerWalk: String,
+        mainAddress: String,
         onSuccess: () -> Unit
     ) {
         viewModelScope.launch {
@@ -49,26 +40,18 @@ class RegisterWalkerViewModel @Inject constructor(
             errorMessage = null
             successMessage = null  // CAMBIO: limpiar éxito previo
 
-            val request = RegisterWalkerRequest(
+            val request = RegisterClientRequest(
                 name = name,
-                bio = bio,
                 email = email,
                 password = password,
-                zone = zone,
                 phone = phone,
-                address = address,
-                experience = experience,
-                serviceZoneLabel = serviceZoneLabel,
-                serviceCenterLat = serviceCenterLat,
-                serviceCenterLng = serviceCenterLng,
-                zoneRadiusKm = zoneRadiusKm,
-                maxDogsPerWalk = maxDogsPerWalk
-                //isClient = false,
-                //isWalker = true
+                mainAddress = mainAddress,
+                isClient = true,
+                isWalker = false
             )
 
             try {
-                val response = api.registerWalker(request)
+                val response = api.registerClient(request)
 
                 if (response.isSuccessful && response.body()?.success == true) {
                     // CAMBIO: indicar éxito para mostrar Toast

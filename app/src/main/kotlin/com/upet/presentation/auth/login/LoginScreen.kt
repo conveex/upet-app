@@ -13,16 +13,19 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.upet.ui.theme.UPetColors
+import com.upet.presentation.auth.login.LoginViewModel
 
 @Composable
 fun LoginScreen(
-    //cambiado a String para hacer pruebas
-    onLoginSuccess: (String) -> Unit,
+    onLoginSuccessClient: () -> Unit,
+    onLoginSuccessWalker: () -> Unit,
     onNavigateToRegisterClient: () -> Unit,
     onNavigateToRegisterWalker: () -> Unit
 ) {
-    var email by remember { mutableStateOf("") }
+    val viewModel: LoginViewModel = hiltViewModel()
+    var email by remember { mutableStateOf("")  }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
@@ -118,16 +121,18 @@ fun LoginScreen(
             // Botón Login
             Button(
                 onClick = {
-                    isLoading = true
-                    // TODO: Implementar lógica de login
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = UPetColors.Primary
-                ),
-                enabled = !isLoading && email.isNotEmpty() && password.isNotEmpty()
+                    viewModel.login(
+                        email = email,
+                        password = password,
+                        onSuccess = { role ->
+                            if (role == "client") {
+                                onLoginSuccessClient()
+                            } else {
+                                onLoginSuccessWalker()
+                            }
+                        }
+                    )
+                }
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(

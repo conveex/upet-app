@@ -5,12 +5,15 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 
-// IMPORTS DE TUS PANTALLAS
+// screens
 import com.upet.ui.screens.auth.LoginScreen
 import com.upet.ui.screens.auth.RegisterClientScreen
 import com.upet.ui.screens.client.ClientHomeScreen
 import com.upet.ui.screens.walker.WalkerHomeScreen
 import com.upet.presentation.auth.register_walker.RegisterWalkerScreen
+
+//val token by tokenDataStore.token.collectAsState(initial = null)
+//val role by tokenDataStore.userRole.collectAsState(initial = null)
 @Composable
 fun UpetNavGraph(navController: NavHostController) {
 
@@ -22,16 +25,14 @@ fun UpetNavGraph(navController: NavHostController) {
         // LOGIN
         composable(UpetScreen.Login.route) {
             LoginScreen(
-                onLoginSuccess = { userRole ->
-                    // Navegación según rol real
-                    if (userRole == "CLIENT") {
-                        navController.navigate(UpetScreen.ClientHome.route) {
-                            popUpTo(UpetScreen.Login.route) { inclusive = true }
-                        }
-                    } else {
-                        navController.navigate(UpetScreen.WalkerHome.route) {
-                            popUpTo(UpetScreen.Login.route) { inclusive = true }
-                        }
+                onLoginSuccessClient = {
+                    navController.navigate(UpetScreen.ClientHome.route) {
+                        popUpTo(UpetScreen.Login.route) { inclusive = true }
+                    }
+                },
+                onLoginSuccessWalker = {
+                    navController.navigate(UpetScreen.WalkerHome.route) {
+                        popUpTo(UpetScreen.Login.route) { inclusive = true }
                     }
                 },
                 onNavigateToRegisterClient = {

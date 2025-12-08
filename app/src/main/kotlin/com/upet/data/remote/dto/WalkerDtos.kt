@@ -4,10 +4,18 @@ import kotlinx.serialization.Serializable
 
 data class RegisterWalkerRequest(
     val name: String,
-    val p_description: String,
+    val bio: String,
     val email: String,
     val password: String,
-    val zone: String
+    val zone: String,
+    val phone: String,
+    val address: String,
+    val experience: String,
+    val serviceZoneLabel: String,
+    val serviceCenterLat: String,
+    val serviceCenterLng: String,
+    val zoneRadiusKm: String,
+    val maxDogsPerWalk: String
 )
 
 data class WalkerHomeResponse(
@@ -26,3 +34,4 @@ data class WalkerHomeResponseDTO(
     val averageRating: Double?,
     val totalReviews: Int?
 )
+
