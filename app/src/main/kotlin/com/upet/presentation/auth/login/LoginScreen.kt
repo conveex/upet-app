@@ -1,5 +1,6 @@
 package com.upet.ui.screens.auth
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -28,8 +29,8 @@ fun LoginScreen(
     var email by remember { mutableStateOf("")  }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
+    val isLoading = viewModel.isLoading
+    val errorMessage = viewModel.errorMessage
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -107,7 +108,7 @@ fun LoginScreen(
                 )
             )
 
-            if (errorMessage.isNotEmpty()) {
+            if (!errorMessage.isNullOrEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = errorMessage,
@@ -130,7 +131,7 @@ fun LoginScreen(
                             } else {
                                 onLoginSuccessWalker()
                             }
-                        }
+                        },
                     )
                 }
             ) {
@@ -142,6 +143,7 @@ fun LoginScreen(
                 } else {
                     Text("Iniciar sesión")
                 }
+
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -161,5 +163,18 @@ fun LoginScreen(
                 )
             }
         }
+        //acuerdate de quitarlo xd
+        /*if (!errorMessage.isNullOrEmpty()) {
+            AlertDialog(
+                onDismissRequest = { viewModel.clearError() },
+                title = { Text("Error al iniciar sesión") },
+                text = { Text(errorMessage ?: "") },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.clearError() }) {
+                        Text("Aceptar")
+                    }
+                }
+            )
+        }*/
     }
 }

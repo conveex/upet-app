@@ -1,5 +1,9 @@
 package com.upet.presentation.auth.login
 
+import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.upet.data.local.datastore.TokenDataStore
@@ -15,10 +19,10 @@ class LoginViewModel @Inject constructor(
     private val tokenStore: TokenDataStore
 ) : ViewModel() {
 
-    var isLoading: Boolean = false
+    var isLoading by mutableStateOf(false)
         private set
 
-    var errorMessage: String? = null
+    var errorMessage by mutableStateOf<String?>(null)
         private set
 
     fun login(email: String, password: String, onSuccess: (String) -> Unit) {
@@ -27,31 +31,52 @@ class LoginViewModel @Inject constructor(
             errorMessage = null
 
             try {
+                Log.d("LOGIN", "Enviando login: $email / $password")
+
                 val response = api.login(LoginRequest(email, password))
+                Log.d("LOGIN", "Response: ${response.code()}")
 
-                if (response.isSuccessful && response.body()?.success == true) {
-                    val data = response.body()!!
+                if (response.isSuccessful) {
+                    val body = response.body()
 
-                    // guardar token
-                    tokenStore.saveToken(data.token)
+                    if (body != null && body.success) {
 
-                    // guardar rol
-                    val role = if (data.isClient) "client" else "walker"
-                    tokenStore.saveRole(role)
+                        // Guardar token
+                        tokenStore.saveToken(body.token)
 
-                    // navegar según rol
-                    onSuccess(role)
+                        // Determinar rol
+                        val role = when {
+                            body.user.isClient -> "client"
+                            body.user.isWalker -> "walker"
+                            else -> "unknown"
+                        }
 
-                } else {
-                    errorMessage = response.message()
+                        tokenStore.saveRole(role)
+
+                        onSuccess(role)
+                        isLoading = false
+                        return@launch
+                    }
+                }else{
+                    errorMessage = when (response.code()) {
+                        401 -> "Credenciales incorrectas"
+                        403 ->  "Email sin verificar o pendiente de aprobación, revise su correo"
+                        500 -> "Error interno del servidor"
+                        else -> "Error desconocido: ${response.code()}"
+                    }
+                    Log.d("LOGIN", "Error asignado al ViewModel: $errorMessage")
                 }
-
             } catch (e: Exception) {
+                Log.e("LOGIN", "EXCEPCIÓN: ", e)
                 errorMessage = "Error de conexión con el servidor"
             }
 
             isLoading = false
         }
     }
+    fun clearError() {
+        errorMessage = null
+    }
 
 }
+

@@ -1,5 +1,6 @@
 package com.upet.presentation.auth.register_walker
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -54,7 +55,7 @@ class RegisterWalkerViewModel @Inject constructor(
                 password = password,
                 zone = zone,
                 phone = phone,
-                address = address,
+                main_address =  address,
                 experience = experience,
                 serviceZoneLabel = serviceZoneLabel,
                 serviceCenterLat = serviceCenterLat,
@@ -66,6 +67,7 @@ class RegisterWalkerViewModel @Inject constructor(
             )
 
             try {
+                Log.d("WalkerRegister", "Address enviada: $address")
                 val response = api.registerWalker(request)
 
                 if (response.isSuccessful && response.body()?.success == true) {

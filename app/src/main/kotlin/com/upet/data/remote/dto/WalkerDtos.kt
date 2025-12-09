@@ -9,7 +9,7 @@ data class RegisterWalkerRequest(
     val password: String,
     val zone: String,
     val phone: String,
-    val address: String,
+    val main_address: String,
     val experience: String,
     val serviceZoneLabel: String,
     val serviceCenterLat: String,
