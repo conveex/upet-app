@@ -1,37 +1,51 @@
 package com.upet.data.local.datastore
 
 import android.content.Context
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import kotlinx.coroutines.flow.first
 
-private val Context.dataStore by preferencesDataStore("upet_prefs")
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "upet_prefs")
 
-class TokenDataStore(private val context: Context) {
-
+class TokenDataStore @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
     companion object {
-        private val TOKEN = stringPreferencesKey("auth_token")
-        private val ROLE = stringPreferencesKey("user_role")
+        val TOKEN_KEY = stringPreferencesKey("token")
+        val ROLE_KEY = stringPreferencesKey("role")
     }
 
-    val token: Flow<String?> = context.dataStore.data.map { it[TOKEN] }
-    val role: Flow<String?> = context.dataStore.data.map { it[ROLE] }
+    private val dataStore = context.dataStore   // ← IMPORTANTE
 
     suspend fun saveToken(token: String) {
-        context.dataStore.edit { prefs ->
-            prefs[TOKEN] = token
+        dataStore.edit { prefs ->
+            prefs[TOKEN_KEY] = token
         }
     }
 
     suspend fun saveRole(role: String) {
-        context.dataStore.edit { prefs ->
-            prefs[ROLE] = role
+        dataStore.edit { prefs ->
+            prefs[ROLE_KEY] = role
         }
     }
 
-    suspend fun clear() {
-        context.dataStore.edit { it.clear() }
+    suspend fun getToken(): String? {
+        val prefs = dataStore.data.first()
+        return prefs[TOKEN_KEY]
+    }
+
+    suspend fun getRole(): String? {
+        val prefs = dataStore.data.first()
+        return prefs[ROLE_KEY]
+    }
+
+    suspend fun clearSession() {
+        dataStore.edit { prefs ->
+            prefs.remove(TOKEN_KEY)
+            prefs.remove(ROLE_KEY)
+        }
     }
 }

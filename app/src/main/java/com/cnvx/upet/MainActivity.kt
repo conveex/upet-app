@@ -11,33 +11,45 @@ import com.upet.data.local.datastore.TokenDataStore
 import com.upet.presentation.navigation.UpetNavGraph
 import com.upet.presentation.navigation.UpetScreen
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
     @Inject
     lateinit var tokenStore: TokenDataStore
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            val navController = rememberNavController()
-            UpetNavGraph(navController)
-            val token = tokenStore.token.collectAsState(initial = null).value
-            val role = tokenStore.role.collectAsState(initial = null).value
 
-            LaunchedEffect(token) {
-                if (token != null && role != null) {
+        setContent {
+
+            val navController = rememberNavController()
+            val token = runBlocking { tokenStore.getToken() }
+            val role = runBlocking { tokenStore.getRole() }
+
+            LaunchedEffect(Unit) {
+                if (token.isNullOrEmpty()) {
+                    // No hay sesión → ir al login
+                    navController.navigate(UpetScreen.Login.route) {
+                        popUpTo(0)
+                    }
+                } else {
+                    // Hay token → entrar según rol
                     if (role == "client") {
-                        navController.navigate(UpetScreen.ClientHome.route)
+                        navController.navigate(UpetScreen.ClientHome.route) {
+                            popUpTo(0)
+                        }
                     } else {
-                        navController.navigate(UpetScreen.WalkerHome.route)
+                        navController.navigate(UpetScreen.WalkerHome.route) {
+                            popUpTo(0)
+                        }
                     }
                 }
             }
 
-
-
+            UpetNavGraph(navController)
         }
     }
 }

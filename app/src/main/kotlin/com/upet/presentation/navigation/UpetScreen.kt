@@ -10,4 +10,8 @@ sealed class UpetScreen(val route: String) {
     // Homes
     object ClientHome : UpetScreen("client_home")
     object WalkerHome : UpetScreen("walker_home")
+
+    //Profiles
+    object Profile : UpetScreen("profile_client")
+    object AddPet : UpetScreen("add_pet")
 }

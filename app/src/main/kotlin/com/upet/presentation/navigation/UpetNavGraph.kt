@@ -11,9 +11,9 @@ import com.upet.ui.screens.auth.RegisterClientScreen
 import com.upet.ui.screens.client.ClientHomeScreen
 import com.upet.ui.screens.walker.WalkerHomeScreen
 import com.upet.presentation.auth.register_walker.RegisterWalkerScreen
+import com.upet.presentation.pets.AddPetScreen
+import com.upet.presentation.profile.ClientProfileScreen
 
-//val token by tokenDataStore.token.collectAsState(initial = null)
-//val role by tokenDataStore.userRole.collectAsState(initial = null)
 @Composable
 fun UpetNavGraph(navController: NavHostController) {
 
@@ -72,11 +72,12 @@ fun UpetNavGraph(navController: NavHostController) {
 
         // HOME CLIENTE
         composable(UpetScreen.ClientHome.route) {
-            ClientHomeScreen(onNavigateToProfile = { navController.navigate("profile") },
+            ClientHomeScreen(onNavigateToProfile = {
+                navController.navigate(UpetScreen.Profile.route) },
                 onNavigateToRequestWalk = { navController.navigate("request_walk") },
                 onNavigateToActiveWalks = { navController.navigate("active_walks") },
                 onNavigateToPendingWalks = { navController.navigate("pending_walks") },
-                onNavigateToAddPet = { navController.navigate("add_pet") })
+                onNavigateToAddPet = { navController.navigate(UpetScreen.AddPet.route) })
         }
 
         // HOME PASEADOR
@@ -86,8 +87,27 @@ fun UpetNavGraph(navController: NavHostController) {
                 onNavigateToMyWalks = { navController.navigate("active_walks") },
                 onNavigateToPredefinedRoutes = { navController.navigate("pending_walks") })
         }
+
+        //CLIENT PROFILE
+        composable(UpetScreen.Profile.route) {
+            ClientProfileScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onLogout = {
+                    navController.navigate(UpetScreen.Login.route) {
+                        popUpTo(0) // limpia toda la pila
+                    }
+                }
+            )
+        }
+        //ADD PET (con fallas)
+        composable(UpetScreen.AddPet.route) {
+            AddPetScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
     }
 }
+
 
 
 
