@@ -13,6 +13,7 @@ import com.upet.ui.theme.UPetColors
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WalkerHomeScreen(
+
     onNavigateToProfile: () -> Unit,
     onNavigateToAvailableWalks: () -> Unit,
     onNavigateToMyWalks: () -> Unit,
@@ -85,7 +86,7 @@ fun WalkerHomeScreen(
             WalkerActionButton(
                 text = "Paseos Disponibles",
                 icon = Icons.Default.Search,
-                onClick = onNavigateToAvailableWalks
+                onClick = onNavigateToMyWalks
             )
 
             Spacer(modifier = Modifier.height(12.dp))

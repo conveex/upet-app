@@ -13,5 +13,10 @@ sealed class UpetScreen(val route: String) {
 
     //Profiles
     object Profile : UpetScreen("profile_client")
+    object WalkerProfile : UpetScreen("profile_walker")
     object AddPet : UpetScreen("add_pet")
+
+    //Walks
+    object MyWalks : UpetScreen("active_walks")
+    object RequestWalk : UpetScreen("request_walk")
 }

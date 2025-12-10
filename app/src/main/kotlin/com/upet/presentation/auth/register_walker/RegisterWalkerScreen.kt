@@ -129,7 +129,7 @@ fun RegisterWalkerScreen(
                 onValueChange = { phone = it },
                 label = { Text("Proporciona tu teléfono") },
                 leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -176,7 +176,7 @@ fun RegisterWalkerScreen(
                 onValueChange = { serviceCenterLat = it },
                 label = { Text("serviceCenterLat") },
                 leadingIcon = { Icon(Icons.Default.NoteAdd, contentDescription = null) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -188,7 +188,7 @@ fun RegisterWalkerScreen(
                 onValueChange = { serviceCenterLng = it },
                 label = { Text("serviceCenterLng") },
                 leadingIcon = { Icon(Icons.Default.NoteAdd, contentDescription = null) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -200,7 +200,7 @@ fun RegisterWalkerScreen(
                 onValueChange = { zoneRadiusKm = it },
                 label = { Text("zoneRadiusKm") },
                 leadingIcon = { Icon(Icons.Default.Adjust, contentDescription = null) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
 

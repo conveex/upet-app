@@ -13,6 +13,9 @@ import com.upet.ui.screens.walker.WalkerHomeScreen
 import com.upet.presentation.auth.register_walker.RegisterWalkerScreen
 import com.upet.presentation.pets.AddPetScreen
 import com.upet.presentation.profile.ClientProfileScreen
+import com.upet.presentation.profile.WalkerProfileScreen
+import com.upet.presentation.walks.MyWalksScreen
+import com.upet.presentation.walks.RequestWalkScreen
 
 @Composable
 fun UpetNavGraph(navController: NavHostController) {
@@ -82,7 +85,7 @@ fun UpetNavGraph(navController: NavHostController) {
 
         // HOME PASEADOR
         composable(UpetScreen.WalkerHome.route) {
-            WalkerHomeScreen(onNavigateToProfile = { navController.navigate("profile") },
+            WalkerHomeScreen(onNavigateToProfile = { navController.navigate("profile_walker") },
                 onNavigateToAvailableWalks = { navController.navigate("request_walk") },
                 onNavigateToMyWalks = { navController.navigate("active_walks") },
                 onNavigateToPredefinedRoutes = { navController.navigate("pending_walks") })
@@ -103,6 +106,30 @@ fun UpetNavGraph(navController: NavHostController) {
         composable(UpetScreen.AddPet.route) {
             AddPetScreen(
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        //Walks Walker
+        composable(UpetScreen.MyWalks.route) {
+            MyWalksScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        //RequestWalk
+        composable(UpetScreen.RequestWalk.route){
+            RequestWalkScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onPostWalk = {/*POR IMPLEMENTAR*/}
+            )
+        }
+        //WalkerProfile
+        composable(UpetScreen.WalkerProfile.route){
+            WalkerProfileScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onLogout = {
+                    navController.navigate(UpetScreen.Login.route) {
+                        popUpTo(0) // limpia toda la pila
+                    }
+                }
             )
         }
     }
