@@ -19,4 +19,11 @@ sealed class UpetScreen(val route: String) {
     //Walks
     object MyWalks : UpetScreen("active_walks")
     object RequestWalk : UpetScreen("request_walk")
+
+    //Pet Details
+        object PetDetail : UpetScreen("pet_detail/{petId}") {
+            fun createRoute(petId: String) = "pet_detail/$petId"
+        }
+
+
 }

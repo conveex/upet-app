@@ -42,7 +42,7 @@ class TokenDataStore @Inject constructor(
         return prefs[ROLE_KEY]
     }
 
-    suspend fun clearSession() {
+    suspend fun clear() {
         dataStore.edit { prefs ->
             prefs.remove(TOKEN_KEY)
             prefs.remove(ROLE_KEY)

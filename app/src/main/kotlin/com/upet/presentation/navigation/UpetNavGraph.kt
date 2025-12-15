@@ -2,8 +2,10 @@ package com.upet.presentation.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 
 // screens
 import com.upet.ui.screens.auth.LoginScreen
@@ -16,6 +18,8 @@ import com.upet.presentation.profile.ClientProfileScreen
 import com.upet.presentation.profile.WalkerProfileScreen
 import com.upet.presentation.walks.MyWalksScreen
 import com.upet.presentation.walks.RequestWalkScreen
+import com.upet.presentation.pets.PetDetailScreen
+import com.upet.presentation.profile.PaymentMethodsScreen
 
 @Composable
 fun UpetNavGraph(navController: NavHostController) {
@@ -80,7 +84,8 @@ fun UpetNavGraph(navController: NavHostController) {
                 onNavigateToRequestWalk = { navController.navigate("request_walk") },
                 onNavigateToActiveWalks = { navController.navigate("active_walks") },
                 onNavigateToPendingWalks = { navController.navigate("pending_walks") },
-                onNavigateToAddPet = { navController.navigate(UpetScreen.AddPet.route) })
+                onNavigateToAddPet = { navController.navigate(UpetScreen.AddPet.route) },
+                onNavigateToPetDetail = {petId -> navController.navigate("pet_detail/$petId")})
         }
 
         // HOME PASEADOR
@@ -95,6 +100,8 @@ fun UpetNavGraph(navController: NavHostController) {
         composable(UpetScreen.Profile.route) {
             ClientProfileScreen(
                 onNavigateBack = { navController.popBackStack() },
+                onNavigateToPaymentMethods = {
+                    navController.navigate("payment_methods") },
                 onLogout = {
                     navController.navigate(UpetScreen.Login.route) {
                         popUpTo(0) // limpia toda la pila
@@ -102,7 +109,7 @@ fun UpetNavGraph(navController: NavHostController) {
                 }
             )
         }
-        //ADD PET (con fallas)
+        //ADD PET
         composable(UpetScreen.AddPet.route) {
             AddPetScreen(
                 onNavigateBack = { navController.popBackStack() }
@@ -130,6 +137,22 @@ fun UpetNavGraph(navController: NavHostController) {
                         popUpTo(0) // limpia toda la pila
                     }
                 }
+            )
+        }
+        //Detalles de mascota
+        composable(
+            route = "pet_detail/{petId}",
+            arguments = listOf(navArgument("petId") { type = NavType.StringType })
+        ) {
+            PetDetailScreen(
+                petId = it.arguments?.getString("petId")!!,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable("payment_methods") {
+            PaymentMethodsScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

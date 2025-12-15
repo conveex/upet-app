@@ -11,6 +11,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.upet.ui.theme.UPetColors
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.FileProvider
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.upet.data.remote.dto.PetItemDto
+import com.upet.presentation.home_client.ClientHomeViewModel
+import com.upet.presentation.navigation.UpetScreen
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -19,8 +32,18 @@ fun ClientHomeScreen(
     onNavigateToRequestWalk: () -> Unit,
     onNavigateToActiveWalks: () -> Unit,
     onNavigateToPendingWalks: () -> Unit,
-    onNavigateToAddPet: () -> Unit
+    onNavigateToAddPet: () -> Unit,
+    onNavigateToPetDetail: (String) -> Unit
 ) {
+    val viewModel: ClientHomeViewModel = hiltViewModel()
+    val pets by viewModel.pets.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadPets()
+    }
+
+
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -74,10 +97,17 @@ fun ClientHomeScreen(
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(3) { // Ejemplo con 3 mascotas
-                    PetCard()
+                items(pets) { pet ->
+                    PetCard(
+                        pet = pet,
+                        onClick = {
+                            onNavigateToPetDetail(pet.id)
+                        }
+                    )
+
                 }
             }
+
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -108,42 +138,30 @@ fun ClientHomeScreen(
 }
 
 @Composable
-fun PetCard() {
+fun PetCard(
+    pet: PetItemDto,
+    onClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .width(120.dp)
-            .height(150.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .height(150.dp)
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(12.dp),
+            modifier = Modifier.fillMaxSize().padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                Icons.Default.Pets,
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = UPetColors.Primary
-            )
+            Icon(Icons.Default.Pets, contentDescription = null)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                "Max",
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                "Labrador",
-                style = MaterialTheme.typography.bodySmall,
-                color = UPetColors.TextSecondary
-            )
+            Text(pet.name)
         }
     }
 }
+
+
 
 @Composable
 fun MainActionButton(
@@ -172,3 +190,6 @@ fun MainActionButton(
         )
     }
 }
+
+
+
