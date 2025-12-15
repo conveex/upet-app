@@ -27,3 +27,45 @@ data class ClientHomePetDTO(
     val name: String,
     val photoUrl: String?
 )
+
+data class UpdateClientRequest(
+    val name: String,
+    val phone: String,
+    val mainAddress: String
+)
+
+data class UpdatePhotoRequest(
+    val photoUrl: String
+)
+
+data class UpdatePhotoResponse(
+    val success: Boolean,
+    val message: String,
+    val user: UserDto
+)
+
+data class DeactivateAccountResponse(
+    val success: Boolean,
+    val message: String,
+    val user: UserDto
+)
+
+data class AddPaymentMethodRequest(
+    val paymentMethodId: String,
+    val extraDetails: String
+)
+
+data class ClientPaymentMethodDto(
+    val id: String,
+    val paymentMethodId: String,
+    val code: String,
+    val displayName: String,
+    val description: String,
+    val extraDetails: String?
+)
+
+data class ClientPaymentMethodsResponse(
+    val success: Boolean,
+    val message: String,
+    val methods: List<ClientPaymentMethodDto>
+)

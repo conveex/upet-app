@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     kotlin("kapt")
     id("com.google.dagger.hilt.android")
+    id("com.google.gms.google-services")
+
 }
 
 android {
@@ -45,6 +47,14 @@ android {
 
 dependencies {
 
+    //Firebase
+    implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
+
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-messaging")
+
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-moshi:2.9.0")
@@ -61,6 +71,10 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.51")
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.identity.jvm)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.material3)
     kapt("com.google.dagger:hilt-android-compiler:2.51")
 
     //DataStore
@@ -73,17 +87,6 @@ dependencies {
     //Coil
     implementation("io.coil-kt:coil-compose:2.6.0")
 
-    // Firebase BOM
-    implementation (platform("com.google.firebase:firebase-bom:33.3.0"))
-
-// Firestore
-    implementation("com.google.firebase:firebase-firestore-ktx")
-
-// Storage
-    implementation("com.google.firebase:firebase-storage-ktx")
-
-// FCM (mensajería)
-    implementation("com.google.firebase:firebase-messaging-ktx")
 
     //Google Maps
     implementation("com.google.android.gms:play-services-location:21.2.0")
