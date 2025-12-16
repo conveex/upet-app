@@ -1,12 +1,10 @@
-package com.upet.presentation.profile
+package com.upet.presentation.home_client
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.upet.data.remote.ApiService
-import com.upet.data.remote.dto.AddPaymentMethodRequest
 import com.upet.data.remote.dto.ClientPaymentMethodDto
-import com.upet.data.remote.dto.PaymentMethodDto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,9 +32,32 @@ class PaymentMethodsViewModel @Inject constructor(
                 val response = api.getClientPaymentMethods()
 
                 if (response.isSuccessful && response.body()?.success == true) {
+                    Log.d("PAYMENT", "Success: ${response.body()?.success}")
+                    Log.d("PAYMENT", "Methods size: ${response.body()?.methods?.size}")
                     _methods.value = response.body()!!.methods
                 } else {
                     _error.value = "No se pudieron cargar los métodos de pago"
+                    Log.d("PAYMENT", "Code: ${response.code()}")
+                    Log.d("PAYMENT", "ErrorBody: ${response.errorBody()?.string()}")
+                }
+
+            } catch (e: Exception) {
+                _error.value = "Error de conexión"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+    fun deleteMethod(methodId: String) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                val response = api.deleteClientPaymentMethod(methodId)
+
+                if (response.isSuccessful && response.body()?.success == true) {
+                    _methods.value = response.body()!!.methods
+                } else {
+                    _error.value = "No se pudo eliminar el método"
                 }
 
             } catch (e: Exception) {

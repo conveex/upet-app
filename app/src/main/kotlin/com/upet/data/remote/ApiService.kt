@@ -1,6 +1,13 @@
 package com.upet.data.remote
 
 import com.upet.data.remote.dto.AddPaymentMethodRequest
+import com.upet.data.remote.dto.AddPaymentMethodResponse
+import com.upet.data.remote.dto.AddPaymentMethodWalkerRequest
+import com.upet.data.remote.dto.AddPaymentMethodWalkerResponse
+import com.upet.data.remote.dto.AvailableWalksResponse
+import com.upet.data.remote.dto.CalculateRouteRequestDto
+import com.upet.data.remote.dto.CalculateRouteResponse
+import com.upet.data.remote.dto.CancelWalkResponse
 import com.upet.data.remote.dto.ClientHomeResponse
 import com.upet.data.remote.dto.ClientPaymentMethodsResponse
 import com.upet.data.remote.dto.CreatePetRequest
@@ -20,12 +27,19 @@ import com.upet.data.remote.dto.WalkResponse
 import com.upet.data.remote.dto.WalkerHomeResponse
 import com.upet.data.remote.dto.WalkerProfileResponse
 import com.upet.data.remote.dto.CreatePetResponse
+import com.upet.data.remote.dto.CreateWalkRequest
+import com.upet.data.remote.dto.CreateWalkResponse
 import com.upet.data.remote.dto.DeactivateAccountResponse
 import com.upet.data.remote.dto.DeletePetResponse
+import com.upet.data.remote.dto.PaymentMethodCatalogDto
+import com.upet.data.remote.dto.PendingWalksResponse
 import com.upet.data.remote.dto.PetDetailResponse
 import com.upet.data.remote.dto.PetsResponse
 import com.upet.data.remote.dto.UpdatePetRequest
 import com.upet.data.remote.dto.UpdatePetResponse
+import com.upet.data.remote.dto.WalkDetailResponse
+import com.upet.data.remote.dto.WalkerPaymentMethodsResponse
+import com.upet.presentation.walks.CalculateRouteRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -96,7 +110,7 @@ interface ApiService {
     @PUT("/api/v1/walkers/me")
     suspend fun  updateProfileWalker(
         @Body request: UpdateWalkerRequest
-    ): Response<Unit>
+    ): Response<WalkerProfileResponse> // CAMBIADO: devuelve el perfil
 
     //------------ FOTO CLIIENTE -------------
     @PUT("/api/v1/users/me/photo")
@@ -142,14 +156,65 @@ interface ApiService {
         @Path("id") petId: String
     ): Response<DeletePetResponse>
 
+    //-------------- METODOS DE PAGO -------------
+    @GET("/payment-methods")
+    suspend fun getPaymentMethodsCatalog():
+            Response<List<PaymentMethodCatalogDto>>
+
     //------------- MDP CLIENTE -----------------
-    @POST("/api/v1/client/payment-methods")
-    suspend fun addPaymentMethod(
-        @Body request: AddPaymentMethodRequest
+    @GET("api/v1/client/payment-methods")
+    suspend fun getClientPaymentMethods(): Response<ClientPaymentMethodsResponse>
+
+    @DELETE("api/v1/client/payment-methods/{methodId}")
+    suspend fun deleteClientPaymentMethod(
+        @Path("methodId") methodId: String
     ): Response<ClientPaymentMethodsResponse>
 
-    //-------------- METODOS DE PAGO -------------
-    @GET("/api/v1/client/payment-methods")
-    suspend fun getClientPaymentMethods(): Response<ClientPaymentMethodsResponse>
+    @POST("api/v1/client/payment-methods")
+    suspend fun addPaymentMethod(
+        @Body request: AddPaymentMethodRequest
+    ): Response<AddPaymentMethodResponse>
+
+    //------------ MDP WALKER ------------------
+    @GET("/api/v1/walker/payment-methods")
+    suspend fun getWalkerPaymentMethods(): Response<WalkerPaymentMethodsResponse>
+
+    @DELETE("/api/v1/walker/payment-methods/{methodId}")
+    suspend fun deleteWalkerPaymentMethod(
+        @Path("methodId") methodId: String
+    ): Response<WalkerPaymentMethodsResponse>
+
+    @POST("api/v1/walker/payment-methods")
+    suspend fun addPaymentMethodWalker(
+        @Body request: AddPaymentMethodWalkerRequest
+    ): Response<AddPaymentMethodWalkerResponse>
+
+    @POST("/api/v1/walks/calculate-route")
+    suspend fun calculateRoute(
+        @Body request: CalculateRouteRequestDto
+    ): Response<CalculateRouteResponse>
+
+    @POST("/api/v1/walks")
+    suspend fun createWalk(
+        @Body request: CreateWalkRequest
+    ): Response<CreateWalkResponse>
+
+    @GET("/api/v1/walks/pending")
+    suspend fun getClientPendingWalks(): Response<PendingWalksResponse>
+
+    @GET("/api/v1/walks/{id}")
+    suspend fun getWalkDetail(
+        @Path("id") walkId: String
+    ): Response<WalkDetailResponse>
+
+    // ------------ CANCELAR PASEO ------------
+    @DELETE("/api/v1/walks/{id}")
+    suspend fun cancelWalk(
+        @Path("id") walkId: String
+    ): Response<CancelWalkResponse>
+
+    // ------------ PASEOS DISPONIBLES (Walker) ------------
+    @GET("/api/v1/walks/available")
+    suspend fun getAvailableWalks(): Response<AvailableWalksResponse>
 
 }
