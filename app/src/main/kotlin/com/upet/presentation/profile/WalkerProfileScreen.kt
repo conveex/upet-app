@@ -10,6 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
@@ -30,6 +31,7 @@ import java.io.File
 @Composable
 fun WalkerProfileScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToPaymentMethods: () -> Unit,
     onLogout: () -> Unit,
     nameInitial: String = "",
     emailInitial: String = "",
@@ -310,6 +312,20 @@ fun WalkerProfileScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Editar perfil")
                 }
+            }
+
+            Button(
+                onClick = { onNavigateToPaymentMethods() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = UPetColors.Primary
+                )
+            ) {
+                Icon(Icons.Default.CreditCard, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Métodos de pago")
             }
 
             // Botón guardar cambios (solo aparece cuando SÍ estás editando)

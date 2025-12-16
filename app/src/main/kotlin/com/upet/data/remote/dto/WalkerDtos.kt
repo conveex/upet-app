@@ -35,22 +35,6 @@ data class WalkerHomeResponseDTO(
     val totalReviews: Int?
 )
 
-//data class WalkerUserDto(
-//    val id: String,
-//    val email: String,
-//    val name: String,
-//    val photoUrl: String?,
-//    val status: String,
-//    val bio: String,
-//    val experience: String,
-//    val serviceZoneLabel: String,
-//    val ratingAverage: String,
-//    val totalReviews: String,
-//    val maxDogs: String,
-//    val serviceCenterLat: String,
-//    val serviceCenterLng: String,
-//    val zoneRadiusKm: String
-//)
 
 data class WalkerUserDto(
     val id: String,
@@ -103,4 +87,30 @@ data class UpdateWalkerPhotoResponse(
     val success: Boolean,
     val message: String,
     val user: WalkerUserDto
+)
+
+data class WalkerPaymentMethodDto(
+    val id: String,
+    val paymentMethodId: String,
+    val code: String,
+    val displayName: String,
+    val description: String,
+    val extraDetails: String?
+)
+
+data class WalkerPaymentMethodsResponse(
+    val success: Boolean,
+    val message: String,
+    val methods: List<WalkerPaymentMethodDto>
+)
+
+data class AddPaymentMethodWalkerRequest(
+    val paymentMethodId: String,
+    val extraDetails: String?
+)
+
+data class AddPaymentMethodWalkerResponse(
+    val success: Boolean,
+    val message: String,
+    val methods: List<ClientPaymentMethodDto>
 )

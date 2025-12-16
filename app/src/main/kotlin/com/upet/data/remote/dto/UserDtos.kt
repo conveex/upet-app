@@ -50,10 +50,6 @@ data class DeactivateAccountResponse(
     val user: UserDto
 )
 
-data class AddPaymentMethodRequest(
-    val paymentMethodId: String,
-    val extraDetails: String
-)
 
 data class ClientPaymentMethodDto(
     val id: String,

@@ -1,6 +1,13 @@
 package com.upet.data.remote.dto
 
+import com.squareup.moshi.Json
 import kotlinx.serialization.Serializable
+
+enum class WalkType(val label: String) {
+    A_TO_B("Origen a destino"),
+    TIME("Por tiempo"),
+    DISTANCE("Por distancia")
+}
 
 data class WalkResponse(
     val walkId: String,
@@ -39,4 +46,172 @@ data class WalkPetDTO(
     val id: String,
     val name: String,
     val photoUrl: String?
+)
+
+data class CalculateRouteResponse(
+    val success: Boolean,
+    val routes: List<RouteDto>
+)
+
+data class RouteDto(
+    val polylineEncoded: String,
+    val distanceKm: Double,
+    val durationMin: Int,
+    val priceAmount: Double,
+    val priceCurrency: String? = null
+)
+
+data class RouteOptionDto(
+    val polyline: String,
+    val distanceKm: Double,
+    val durationMin: Int,
+    val price: Double
+)
+
+data class CreateWalkRequest(
+    @Json(name = "type") val type: String,
+    @Json(name = "origin") val origin: LatLngDto,
+    @Json(name = "destination") val destination: LatLngDto?,
+    @Json(name = "pickup") val pickup: LatLngDto,
+    @Json(name = "dropoff") val dropoff: LatLngDto?,
+    @Json(name = "estimatedDistanceMeters") val estimatedDistanceMeters: Int,
+    @Json(name = "estimatedDurationSeconds") val estimatedDurationSeconds: Int,
+    @Json(name = "selectedRoutePolylineEncoded") val selectedRoutePolylineEncoded: String,
+    @Json(name = "requestedStartTime") val requestedStartTime: String,
+    @Json(name = "predefinedRouteId") val predefinedRouteId: String? = null,
+    @Json(name = "petIds") val petIds: List<String>,
+    @Json(name = "paymentMethodIds") val paymentMethodIds: List<String>
+)
+
+data class CreateWalkResponse(
+    val success: Boolean,
+    val message: String,
+    val walk: WalkDataDto
+)
+
+data class WalkDataDto(
+    val id: String
+)
+
+data class CalculateRouteRequestDto(
+    @Json(name = "type")
+    val type: WalkType,
+
+    @Json(name ="origin")
+    val origin: LatLngDto,
+
+    @Json(name ="destination")
+    val destination: LatLngDto? = null,
+
+    @Json(name ="timeMinutes")
+    val timeMinutes: Int? = null,
+
+    @Json(name = "distanceKm")
+    val distanceKm: Double? = null
+)
+
+data class LatLngDto(
+    @Json( name ="lat")
+    val lat: Double,
+
+    @Json(name = "lng")
+    val lng: Double
+)
+
+// --- NUEVOS DTOs PARA PENDING WALKS (CLIENTE) ---
+
+data class PendingWalksResponse(
+    val success: Boolean,
+    val walks: List<PendingWalkDto>
+)
+
+data class PendingWalkDto(
+    val id: String,
+    val type: String,
+    val status: String,
+    val requestedStartTime: String,
+    val estimatedDistanceMeters: Int,
+    val estimatedDurationSeconds: Int,
+    val priceAmount: Double,
+    val priceCurrency: String
+)
+
+// --- NUEVOS DTOs PARA AVAILABLE WALKS (WALKER) ---
+
+data class AvailableWalksResponse(
+    val success: Boolean,
+    val walks: List<AvailableWalkDto>
+)
+
+data class AvailableWalkDto(
+    val id: String,
+    val type: String,
+    val status: String,
+    val requestedStartTime: String,
+    val estimatedDistanceMeters: Int,
+    val estimatedDurationSeconds: Int,
+    val priceAmount: Double,
+    val priceCurrency: String
+)
+
+// --- NUEVOS DTOs PARA WALK DETAIL ---
+
+data class WalkDetailResponse(
+    val success: Boolean,
+    val message: String,
+    val walk: WalkDetailDto
+)
+
+data class WalkDetailDto(
+    val id: String,
+    val clientId: String,
+    val walkerId: String?,
+    val predefinedRouteId: String?,
+    val type: String,
+    val source: String?,
+    val status: String,
+
+    val origin: LatLngDto,
+    val destination: LatLngDto?,
+    val pickup: LatLngDto?,
+    val dropoff: LatLngDto?,
+
+    val estimatedDistanceMeters: Int,
+    val estimatedDurationSeconds: Int,
+
+    val selectedRoutePolylineEncoded: String?,
+
+    val requestedStartTime: String,
+    val actualStartTime: String?,
+    val actualEndTime: String?,
+
+    val priceAmount: Double,
+    val priceCurrency: String,
+
+    val selectedPaymentMethodId: String?,
+    val agreedPaymentMethodId: String?,
+    
+    val petIds: List<String>,
+    val paymentMethodIds: List<String>
+)
+
+// --- DTOs CANCEL WALK ---
+
+data class CancelWalkResponse(
+    val success: Boolean,
+    val message: String,
+    val walk: WalkCancelDto
+)
+
+data class WalkCancelDto(
+    val id: String,
+    val status: String,
+    val type: String,
+    val priceAmount: Double,
+    val priceCurrency: String,
+    val requestedStartTime: String,
+    val petIds: List<String>,
+    val paymentMethodIds: List<String>,
+    val createdAt: String,
+    val updatedAt: String
 )
