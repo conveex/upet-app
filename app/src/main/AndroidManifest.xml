@@ -51,6 +51,11 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        
+        <!-- SERVICIO DE UBICACIÓN -->
+        <service
+            android:name="com.upet.data.service.LocationService"
+            android:foregroundServiceType="location" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

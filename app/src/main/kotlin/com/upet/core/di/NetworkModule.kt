@@ -1,5 +1,6 @@
 package com.upet.core.di
 
+import com.google.firebase.firestore.FirebaseFirestore
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.upet.data.local.datastore.TokenDataStore
@@ -66,16 +67,16 @@ object NetworkModule {
     ): ApiService =
         retrofit.create(ApiService::class.java)
 
-   // @Provides
-    //@Singleton
-    //fun provideTokenDataStore(@ApplicationContext context: Context): TokenDataStore {
-     //   return TokenDataStore(context)
-    //}
-
     @Provides
     @Singleton
     fun provideAuthInterceptor(tokenDataStore: TokenDataStore): AuthInterceptor {
         return AuthInterceptor(tokenDataStore)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFirebaseFirestore(): FirebaseFirestore {
+        return FirebaseFirestore.getInstance()
     }
 
 }

@@ -27,6 +27,8 @@ import com.upet.presentation.home_client.PaymentMethodsScreen
 import com.upet.presentation.home_walker.AddPaymentMethodWalkerScreen
 import com.upet.presentation.home_walker.PaymentMethodsWalkerScreen
 import com.upet.presentation.walks.ClientActiveWalksScreen
+import com.upet.presentation.walks.ClientActiveWalkMapScreen
+import com.upet.presentation.walks.WalkerActiveWalkMapScreen
 
 @Composable
 fun UpetNavGraph(navController: NavHostController) {
@@ -140,7 +142,8 @@ fun UpetNavGraph(navController: NavHostController) {
             WalkerActiveWalksScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onWalkClick = { walkId ->
-                    navController.navigate("walk_detail/$walkId")
+                    // Redirigir al mapa activo del paseador
+                    navController.navigate("walker_active_map/$walkId")
                 }
             )
         }
@@ -231,12 +234,13 @@ fun UpetNavGraph(navController: NavHostController) {
              ClientActiveWalksScreen(
                  onNavigateBack = { navController.popBackStack() },
                  onWalkClick = { walkId ->
-                     navController.navigate("walk_detail/$walkId")
+                     // Redirigir al mapa activo del cliente
+                     navController.navigate("client_active_map/$walkId")
                  }
              )
         }
 
-        // DETALLE PASEO
+        // DETALLE PASEO (Genérico / Pendiente / Disponible)
         composable(
             route = "walk_detail/{walkId}?isAvailable={isAvailable}",
             arguments = listOf(
@@ -253,6 +257,26 @@ fun UpetNavGraph(navController: NavHostController) {
             WalkDetailScreen(
                 walkId = walkId,
                 isAvailable = isAvailable,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // MAPA ACTIVO (CLIENTE)
+        composable(
+            route = "client_active_map/{walkId}",
+            arguments = listOf(navArgument("walkId") { type = NavType.StringType })
+        ) {
+            ClientActiveWalkMapScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // MAPA ACTIVO (PASEADOR)
+        composable(
+            route = "walker_active_map/{walkId}",
+            arguments = listOf(navArgument("walkId") { type = NavType.StringType })
+        ) {
+            WalkerActiveWalkMapScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
