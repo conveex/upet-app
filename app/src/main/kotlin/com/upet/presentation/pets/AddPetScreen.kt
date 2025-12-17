@@ -1,25 +1,34 @@
 package com.upet.presentation.pets
 
+import android.Manifest
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.rememberAsyncImagePainter
 import com.upet.ui.theme.UPetColors
 import java.io.File
 
@@ -39,18 +48,50 @@ fun AddPetScreen(
     var behavior by remember { mutableStateOf("") }
     var specialConditions by remember { mutableStateOf("") }
     var photoUri by remember { mutableStateOf<Uri?>(null) }
+    
+    // Estado para controlar el diálogo de selección de fuente de imagen
+    var showImageSourceDialog by remember { mutableStateOf(false) }
+    
     val viewModel: AddPetViewModel = hiltViewModel()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
     val success by viewModel.success.collectAsState()
 
-    val imageLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        photoUri = uri
+    val context = LocalContext.current
+    
+    // URI temporal para la cámara
+    val tempPhotoUri = remember {
+        FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.provider",
+            File(context.cacheDir, "temp_pet_photo.jpg")
+        )
     }
 
+    // Launchers
+    val takePhotoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { successPhoto ->
+        if (successPhoto) {
+            photoUri = tempPhotoUri
+        }
+    }
+    
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            takePhotoLauncher.launch(tempPhotoUri)
+        }
+    }
 
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            photoUri = uri
+        }
+    }
 
     LaunchedEffect(success) {
         if (success) {
@@ -69,8 +110,31 @@ fun AddPetScreen(
             }
         )
     }
-
-
+    
+    // Diálogo para elegir cámara o galería
+    if (showImageSourceDialog) {
+        AlertDialog(
+            onDismissRequest = { showImageSourceDialog = false },
+            title = { Text("Seleccionar foto") },
+            text = { Text("¿Cómo quieres agregar la foto?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showImageSourceDialog = false
+                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                }) {
+                    Text("Cámara")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showImageSourceDialog = false
+                    galleryLauncher.launch("image/*")
+                }) {
+                    Text("Galería")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -96,16 +160,38 @@ fun AddPetScreen(
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-            Button(
-                onClick = { imageLauncher.launch("image/*") },
+            
+            // FOTO DE MASCOTA (Estilo Circular como en Profile)
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    //.height(180.dp)
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(Color.Gray.copy(alpha = 0.2f))
+                    .clickable { showImageSourceDialog = true },
+                contentAlignment = Alignment.Center
             ) {
-                Text("FOTO")
+                if (photoUri != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(photoUri),
+                        contentDescription = "Foto de mascota",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.CameraAlt, // Cambiado a cámara para indicar acción
+                        contentDescription = "Agregar foto",
+                        modifier = Modifier.size(40.dp),
+                        tint = Color.Gray
+                    )
+                }
             }
-
+            Text(
+                text = "Toca para agregar foto",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 8.dp)
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -120,30 +206,36 @@ fun AddPetScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            //Especie
+            // Especie (RadioButtons a la izquierda)
             Text(
                 text = "Especie",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.align(Alignment.Start)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                RadioButton(
-                    selected = species == "DOG",
-                    onClick = { species = "DOG" }
-                )
-                Text("Perro")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(
+                        selected = species == "DOG",
+                        onClick = { species = "DOG" }
+                    )
+                    Text("Perro")
+                }
 
                 Spacer(modifier = Modifier.width(16.dp))
 
-                RadioButton(
-                    selected = species == "CAT",
-                    onClick = { species = "CAT" }
-                )
-                Text("Gato")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(
+                        selected = species == "CAT",
+                        onClick = { species = "CAT" }
+                    )
+                    Text("Gato")
+                }
             }
 
             // Raza
@@ -162,23 +254,22 @@ fun AddPetScreen(
                 value = color,
                 onValueChange = { color = it },
                 label = { Text("Color de la mascota") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp)
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "Tamaño",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.align(Alignment.Start)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Column {
+            Column(modifier = Modifier.align(Alignment.Start)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(
                         selected = size == "SMALL",
@@ -205,13 +296,13 @@ fun AddPetScreen(
             }
 
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Edad
             OutlinedTextField(
                 value = age,
                 onValueChange = { age = it },
-                label = { Text("Edad") },
+                label = { Text("Edad (años)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
@@ -226,24 +317,22 @@ fun AddPetScreen(
                 label = { Text("Comportamiento") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp)
+                    .height(100.dp)
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Condiciones especiales
             OutlinedTextField(
                 value = specialConditions,
                 onValueChange = { specialConditions = it },
-                label = { Text("¿Tiene su mascota alguna condicion especial?") },
+                label = { Text("¿Alguna condición especial?") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp)
+                    .height(100.dp)
             )
 
             Spacer(modifier = Modifier.height(32.dp))
-
-            //FOTOGRAFIA
 
             // Botón "Agregar Mascota"
             Button(
@@ -260,13 +349,20 @@ fun AddPetScreen(
                         photoUri = photoUri
                     )
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(containerColor = UPetColors.Primary)
             ) {
-                Text("Agregar mascota")
-
-
-        }
-
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Agregar mascota")
+                }
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 package com.upet.presentation.home_walker
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.upet.data.remote.ApiService
@@ -24,6 +25,10 @@ class AddPaymentMethodWalkerViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error = _error.asStateFlow()
 
+    init {
+        loadCatalog()
+    }
+
     fun loadCatalog() {
         viewModelScope.launch {
             try {
@@ -31,9 +36,11 @@ class AddPaymentMethodWalkerViewModel @Inject constructor(
                 val response = api.getPaymentMethodsCatalog()
                 if (response.isSuccessful) {
                     _catalog.value = response.body() ?: emptyList()
+                } else {
+                    _error.value = "Error al cargar catálogo: ${response.code()}"
                 }
             } catch (e: Exception) {
-                _error.value = "Error al cargar catálogo"
+                _error.value = "Error de conexión: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
@@ -47,18 +54,31 @@ class AddPaymentMethodWalkerViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             try {
-                val response = api.addPaymentMethodWalker(
+                _isLoading.value = true
+                _error.value = null
+                
+                // NOTA: Asegúrate de que en ApiService la ruta sea "api/v1/walker/payment-methods"
+                // y no "client/payment-methods".
+                val response = api.createWalkerPaymentMethod(
                     AddPaymentMethodWalkerRequest(paymentMethodId, extraDetails)
                 )
 
                 if (response.isSuccessful && response.body()?.success == true) {
                     onSuccess()
                 } else {
-                    _error.value = response.body()?.message ?: "Error al agregar método"
+                    val errorBody = response.errorBody()?.string()
+                    _error.value = if (!errorBody.isNullOrBlank()) {
+                         // A veces el backend devuelve JSON en el error, podrías parsearlo si quisieras
+                        "Error del servidor: $errorBody"
+                    } else {
+                        response.body()?.message ?: "Error al agregar método (${response.code()})"
+                    }
                 }
 
             } catch (e: Exception) {
-                _error.value = "Error de conexión"
+                _error.value = "Error de conexión: ${e.message}"
+            } finally {
+                _isLoading.value = false
             }
         }
     }

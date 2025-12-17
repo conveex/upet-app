@@ -2,7 +2,7 @@ package com.upet.presentation.walks
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.upet.data.remote.dto.AvailableWalkDto
+import com.upet.data.remote.dto.WalkSummaryDto
 import com.upet.data.repository.WalksRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +13,7 @@ import javax.inject.Inject
 
 data class WalkerWalksUiState(
     val isLoading: Boolean = false,
-    val availableWalks: List<AvailableWalkDto> = emptyList(),
+    val availableWalks: List<WalkSummaryDto> = emptyList(),
     val errorMessage: String? = null
 )
 

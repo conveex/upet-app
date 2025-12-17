@@ -6,9 +6,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.messaging.FirebaseMessaging
 import com.upet.data.local.datastore.TokenDataStore
 import com.upet.data.remote.ApiService
 import com.upet.data.remote.dto.LoginRequest
+import com.upet.data.remote.dto.UpdateFcmTokenRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -43,6 +46,8 @@ class LoginViewModel @Inject constructor(
 
                         // Guardar token
                         tokenStore.saveToken(body.token)
+                        // Guardar UserId (importante para lógica de token FCM)
+                        tokenStore.saveUserId(body.user.id)
 
                         // Determinar rol
                         val role = when {
@@ -52,6 +57,9 @@ class LoginViewModel @Inject constructor(
                         }
 
                         tokenStore.saveRole(role)
+
+                        // ACTUALIZAR TOKEN FCM
+                        updateFcmToken()
 
                         onSuccess(role)
                         isLoading = false
@@ -74,9 +82,35 @@ class LoginViewModel @Inject constructor(
             isLoading = false
         }
     }
+    
+    private fun updateFcmToken() {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w("LOGIN", "Fetching FCM registration token failed", task.exception)
+                return@OnCompleteListener
+            }
+
+            // Get new FCM registration token
+            val token = task.result
+            
+            // Enviar al backend
+            viewModelScope.launch {
+                try {
+                    val response = api.updateFcmToken(UpdateFcmTokenRequest(token))
+                    if (response.isSuccessful) {
+                        Log.d("LOGIN", "Token FCM actualizado al iniciar sesión")
+                    } else {
+                        Log.e("LOGIN", "Error al actualizar FCM en login: ${response.code()}")
+                    }
+                } catch (e: Exception) {
+                    Log.e("LOGIN", "Excepción actualizando FCM en login", e)
+                }
+            }
+        })
+    }
+    
     fun clearError() {
         errorMessage = null
     }
 
 }
-

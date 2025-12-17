@@ -118,14 +118,14 @@ data class LatLngDto(
     val lng: Double
 )
 
-// --- NUEVOS DTOs PARA PENDING WALKS (CLIENTE) ---
+// --- DTOs PARA LISTADOS DE PASEOS (PENDING, ACTIVE, AVAILABLE) ---
 
-data class PendingWalksResponse(
+data class WalkListResponse(
     val success: Boolean,
-    val walks: List<PendingWalkDto>
+    val walks: List<WalkSummaryDto>
 )
 
-data class PendingWalkDto(
+data class WalkSummaryDto(
     val id: String,
     val type: String,
     val status: String,
@@ -136,25 +136,7 @@ data class PendingWalkDto(
     val priceCurrency: String
 )
 
-// --- NUEVOS DTOs PARA AVAILABLE WALKS (WALKER) ---
-
-data class AvailableWalksResponse(
-    val success: Boolean,
-    val walks: List<AvailableWalkDto>
-)
-
-data class AvailableWalkDto(
-    val id: String,
-    val type: String,
-    val status: String,
-    val requestedStartTime: String,
-    val estimatedDistanceMeters: Int,
-    val estimatedDurationSeconds: Int,
-    val priceAmount: Double,
-    val priceCurrency: String
-)
-
-// --- NUEVOS DTOs PARA WALK DETAIL ---
+// --- DTOs PARA WALK DETAIL ---
 
 data class WalkDetailResponse(
     val success: Boolean,
@@ -192,7 +174,17 @@ data class WalkDetailDto(
     val agreedPaymentMethodId: String?,
     
     val petIds: List<String>,
-    val paymentMethodIds: List<String>
+    val paymentMethodIds: List<String>,
+    
+    // Campo opcional por si el backend envía los detalles completos
+    val paymentMethods: List<WalkPaymentMethodDto>? = null
+)
+
+data class WalkPaymentMethodDto(
+    val id: String,
+    val name: String? = null,
+    val displayName: String? = null,
+    val code: String? = null
 )
 
 // --- DTOs CANCEL WALK ---
@@ -214,4 +206,30 @@ data class WalkCancelDto(
     val paymentMethodIds: List<String>,
     val createdAt: String,
     val updatedAt: String
+)
+
+// --- DTOs ACCEPT WALK ---
+
+data class AcceptWalkRequest(
+    val agreedPaymentMethodId: String
+)
+
+data class AcceptWalkResponse(
+    val success: Boolean,
+    val message: String,
+    val walk: WalkDetailDto // Reutilizamos el detalle o creamos uno nuevo si varía mucho
+)
+
+// --- DTOs SPRINT 5: START & END WALK ---
+
+data class StartWalkRequest(
+    val lat: Double,
+    val lng: Double,
+    val startPhotoUrl: String? = null
+)
+
+data class EndWalkRequest(
+    val lat: Double,
+    val lng: Double,
+    val endPhotoUrl: String? = null
 )

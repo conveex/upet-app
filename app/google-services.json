@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "935662695130",
+    "project_id": "upet-41d54",
+    "storage_bucket": "upet-41d54.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:935662695130:android:6070c44dce743b6be76be3",
+        "android_client_info": {
+          "package_name": "com.cnvx.upet"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1IyEapDdS1J29AOuH3FBaAvYpjhrBD7E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

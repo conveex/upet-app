@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -13,11 +14,10 @@ import com.upet.ui.theme.UPetColors
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WalkerHomeScreen(
-
     onNavigateToProfile: () -> Unit,
     onNavigateToAvailableWalks: () -> Unit,
-    onNavigateToMyWalks: () -> Unit,
-    onNavigateToPredefinedRoutes: () -> Unit
+    onNavigateToMyWalks: () -> Unit
+    // Se elimina onNavigateToPredefinedRoutes de la firma
 ) {
     Scaffold(
         topBar = {
@@ -44,7 +44,8 @@ fun WalkerHomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Estado del paseador
             Card(
@@ -55,7 +56,8 @@ fun WalkerHomeScreen(
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
                         Text(
@@ -80,30 +82,20 @@ fun WalkerHomeScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
             // Botones principales
             WalkerActionButton(
                 text = "Paseos Disponibles",
                 icon = Icons.Default.Search,
-                onClick = onNavigateToMyWalks
+                onClick = onNavigateToAvailableWalks // Va a la screen de paseos para aceptar
             )
-
-            Spacer(modifier = Modifier.height(12.dp))
 
             WalkerActionButton(
                 text = "Mis Paseos",
                 icon = Icons.Default.List,
-                onClick = onNavigateToMyWalks
+                onClick = onNavigateToMyWalks // Va a los paseos ya aceptados/activos
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            WalkerActionButton(
-                text = "Rutas Predefinidas",
-                icon = Icons.Default.Route,
-                onClick = onNavigateToPredefinedRoutes
-            )
+            // El botón de Rutas predefinidas se ha ocultado.
         }
     }
 }
@@ -135,4 +127,3 @@ fun WalkerActionButton(
         )
     }
 }
-

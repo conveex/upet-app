@@ -16,7 +16,8 @@ import com.upet.presentation.auth.register_walker.RegisterWalkerScreen
 import com.upet.presentation.pets.AddPetScreen
 import com.upet.presentation.profile.ClientProfileScreen
 import com.upet.presentation.profile.WalkerProfileScreen
-import com.upet.presentation.walks.WalkerWalksScreen // Corregido import
+import com.upet.presentation.walks.WalkerWalksScreen // Para paseos disponibles
+import com.upet.presentation.walks.WalkerActiveWalksScreen // Para paseos activos
 import com.upet.presentation.walks.RequestWalkScreen
 import com.upet.presentation.walks.PendingWalksScreen
 import com.upet.presentation.walks.WalkDetailScreen
@@ -25,6 +26,7 @@ import com.upet.presentation.home_client.AddPaymentMethodScreen
 import com.upet.presentation.home_client.PaymentMethodsScreen
 import com.upet.presentation.home_walker.AddPaymentMethodWalkerScreen
 import com.upet.presentation.home_walker.PaymentMethodsWalkerScreen
+import com.upet.presentation.walks.ClientActiveWalksScreen
 
 @Composable
 fun UpetNavGraph(navController: NavHostController) {
@@ -70,7 +72,7 @@ fun UpetNavGraph(navController: NavHostController) {
             )
         }
 
-        // REGISTRO PASEADOR (cuando lo tengas)
+        // REGISTRO PASEADOR
         composable(UpetScreen.RegisterWalker.route) {
             RegisterWalkerScreen(
                 onRegisterSuccess = {
@@ -84,23 +86,22 @@ fun UpetNavGraph(navController: NavHostController) {
 
         // HOME CLIENTE
         composable(UpetScreen.ClientHome.route) {
-            ClientHomeScreen(onNavigateToProfile = {
-                navController.navigate(UpetScreen.Profile.route) },
+            ClientHomeScreen(
+                onNavigateToProfile = { navController.navigate(UpetScreen.Profile.route) },
                 onNavigateToRequestWalk = { navController.navigate("request_walk") },
-                onNavigateToActiveWalks = { navController.navigate("active_walks") },
+                onNavigateToActiveWalks = { navController.navigate("client_active_walks") }, // Ruta específica para cliente
                 onNavigateToPendingWalks = { navController.navigate("pending_walks") },
                 onNavigateToAddPet = { navController.navigate(UpetScreen.AddPet.route) },
-                onNavigateToPetDetail = {petId -> navController.navigate("pet_detail/$petId")})
+                onNavigateToPetDetail = { petId -> navController.navigate("pet_detail/$petId") }
+            )
         }
 
         // HOME PASEADOR
         composable(UpetScreen.WalkerHome.route) {
             WalkerHomeScreen(
                 onNavigateToProfile = { navController.navigate("profile_walker") },
-                // Corregido: Available Walks va a MyWalks (WalkerWalksScreen)
-                onNavigateToAvailableWalks = { navController.navigate(UpetScreen.MyWalks.route) }, 
-                onNavigateToMyWalks = { navController.navigate("active_walks") },
-                onNavigateToPredefinedRoutes = { navController.navigate("pending_walks") }
+                onNavigateToAvailableWalks = { navController.navigate("available_walks") }, // Paseos para aceptar
+                onNavigateToMyWalks = { navController.navigate("walker_active_walks") } // Paseos ya aceptados/activos
             )
         }
 
@@ -124,9 +125,19 @@ fun UpetNavGraph(navController: NavHostController) {
             )
         }
         
-        // Walks Walker (Available Walks)
-        composable(UpetScreen.MyWalks.route) {
+        // PASEOS DISPONIBLES (WALKER)
+        composable("available_walks") {
             WalkerWalksScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onWalkClick = { walkId ->
+                    navController.navigate("walk_detail/$walkId?isAvailable=true")
+                }
+            )
+        }
+        
+        // PASEOS ACTIVOS (WALKER)
+        composable("walker_active_walks") {
+            WalkerActiveWalksScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onWalkClick = { walkId ->
                     navController.navigate("walk_detail/$walkId")
@@ -140,7 +151,6 @@ fun UpetNavGraph(navController: NavHostController) {
                 onNavigateBack = { navController.popBackStack() },
                 onPostWalk = {
                     navController.navigate("pending_walks") {
-                        // Opcional: limpiar backstack para no volver al request
                         popUpTo(UpetScreen.ClientHome.route)
                     }
                 }
@@ -151,7 +161,7 @@ fun UpetNavGraph(navController: NavHostController) {
             WalkerProfileScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToPaymentMethods = {
-                    navController.navigate("payment_methods") },
+                    navController.navigate("payment_methods_walker") }, // Ruta específica para walker
                 onLogout = {
                     navController.navigate(UpetScreen.Login.route) {
                         popUpTo(0) // limpia toda la pila
@@ -179,9 +189,6 @@ fun UpetNavGraph(navController: NavHostController) {
             )
         }
 
-        // Nota: hay rutas duplicadas para walkers, idealmente usar IDs distintos
-        // pero lo dejo como estaba por ahora para no romper nada.
-
         composable("add_payment_method") {
             AddPaymentMethodScreen(
                 onNavigateBack = { navController.popBackStack() },
@@ -190,8 +197,26 @@ fun UpetNavGraph(navController: NavHostController) {
                 }
             )
         }
+        
+        composable("payment_methods_walker") {
+            PaymentMethodsWalkerScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onAddMethod = {
+                    navController.navigate("add_payment_method_walker")
+                }
+            )
+        }
+        
+        composable("add_payment_method_walker") {
+            AddPaymentMethodWalkerScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onSuccess = {
+                    navController.popBackStack()
+                }
+            )
+        }
 
-        // NUEVA PANTALLA: PASEOS PENDIENTES
+        // PASEOS PENDIENTES (CLIENTE)
         composable("pending_walks") {
             PendingWalksScreen(
                 onNavigateBack = { navController.popBackStack() },
@@ -200,15 +225,34 @@ fun UpetNavGraph(navController: NavHostController) {
                 }
             )
         }
+        
+        // PASEOS ACTIVOS DEL CLIENTE
+        composable("client_active_walks") {
+             ClientActiveWalksScreen(
+                 onNavigateBack = { navController.popBackStack() },
+                 onWalkClick = { walkId ->
+                     navController.navigate("walk_detail/$walkId")
+                 }
+             )
+        }
 
         // DETALLE PASEO
         composable(
-            route = "walk_detail/{walkId}",
-            arguments = listOf(navArgument("walkId") { type = NavType.StringType })
-        ) {
-            val walkId = it.arguments?.getString("walkId") ?: return@composable
+            route = "walk_detail/{walkId}?isAvailable={isAvailable}",
+            arguments = listOf(
+                navArgument("walkId") { type = NavType.StringType },
+                navArgument("isAvailable") { 
+                    type = NavType.BoolType
+                    defaultValue = false 
+                }
+            )
+        ) { backStackEntry ->
+            val walkId = backStackEntry.arguments?.getString("walkId") ?: return@composable
+            val isAvailable = backStackEntry.arguments?.getBoolean("isAvailable") ?: false
+            
             WalkDetailScreen(
                 walkId = walkId,
+                isAvailable = isAvailable,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
