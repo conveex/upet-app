@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,13 +42,21 @@ fun AddPaymentMethodWalkerScreen(
 ) {
     val catalog by viewModel.catalog.collectAsState()
     val error by viewModel.error.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
     var selectedMethodId by remember { mutableStateOf<String?>(null) }
     var extraDetails by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
-        viewModel.loadCatalog()
-    }
+    // Ya no es necesario llamar a loadCatalog aquí manualmente si se hace en el init del ViewModel.
+    // Pero si quieres recargar cada vez que entras a la pantalla, puedes dejarlo.
+    // Por seguridad, para no duplicar llamadas si la recomposición ocurre,
+    // el init block del ViewModel es mejor para la carga inicial.
+    // Sin embargo, si quieres refrescar al volver, LaunchedEffect es útil.
+
+    // Comentamos esto si ya está en el init, o lo dejamos si queremos forzar recarga al recomponer la pantalla por primera vez.
+    // LaunchedEffect(Unit) {
+    //     viewModel.loadCatalog()
+    // }
 
     Scaffold(
         topBar = {
@@ -106,10 +116,18 @@ fun AddPaymentMethodWalkerScreen(
                         )
                     }
                 },
-                enabled = selectedMethodId != null,
+                enabled = selectedMethodId != null && !isLoading,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Guardar método")
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Guardar método")
+                }
             }
 
             error?.let {

@@ -1,5 +1,6 @@
 package com.upet.presentation.walks
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -24,20 +26,30 @@ import com.upet.ui.theme.UPetColors
 @Composable
 fun WalkDetailScreen(
     walkId: String,
+    isAvailable: Boolean = false,
     onNavigateBack: () -> Unit,
     viewModel: WalkDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
     var showCancelDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
-    LaunchedEffect(walkId) {
-        viewModel.loadWalkDetail(walkId)
+    LaunchedEffect(walkId, isAvailable) {
+        viewModel.loadWalkDetail(walkId, isAvailable)
+    }
+
+    // Efecto para mostrar mensaje de éxito al aceptar
+    LaunchedEffect(state.walkAccepted) {
+        if (state.walkAccepted) {
+            Toast.makeText(context, "¡Paseo aceptado exitosamente!", Toast.LENGTH_LONG).show()
+            onNavigateBack() // Volver a la lista
+        }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Detalle del Paseo") },
+                title = { Text(if (isAvailable) "Paseo Disponible" else "Detalle del Paseo") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
@@ -56,7 +68,6 @@ fun WalkDetailScreen(
             } else if (state.walk != null) {
                 val walk = state.walk!!
                 
-                // Traducciones
                 val statusText = when (walk.status) {
                     "PENDING" -> "Pendiente"
                     "ACCEPTED" -> "Aceptado"
@@ -78,14 +89,13 @@ fun WalkDetailScreen(
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                 ) {
-                    // MAPA (mitad superior)
+                    // MAPA
                     Box(modifier = Modifier.height(300.dp)) {
                         val origin = LatLng(walk.origin.lat, walk.origin.lng)
                         val cameraPositionState = rememberCameraPositionState {
                             position = CameraPosition.fromLatLngZoom(origin, 14f)
                         }
                         
-                        // Centrar mapa si hay polyline
                         val polylinePoints = remember(walk.selectedRoutePolylineEncoded) {
                             if (!walk.selectedRoutePolylineEncoded.isNullOrEmpty()) {
                                 PolyUtil.decode(walk.selectedRoutePolylineEncoded)
@@ -123,7 +133,7 @@ fun WalkDetailScreen(
                         }
                     }
 
-                    // INFORMACIÓN (mitad inferior)
+                    // INFO
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("Estado: $statusText", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.height(8.dp))
@@ -147,17 +157,61 @@ fun WalkDetailScreen(
                         
                         if (walk.walkerId == null) {
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("Esperando paseador...", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
-                        
-                            // BOTÓN DE CANCELAR PASEO (Solo si es PENDING)
-                            if (walk.status == "PENDING") {
-                                Spacer(modifier = Modifier.height(24.dp))
+                            
+                            // SECCIÓN ACEPTAR PASEO (Para Walker)
+                            if (isAvailable) {
+                                Text("Selecciona método de cobro:", style = MaterialTheme.typography.titleMedium)
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // Lista de métodos de pago permitidos por el cliente
+                                walk.paymentMethodIds.forEach { methodId ->
+                                    // Intentamos buscar nombre legible en el catálogo cargado, o mostramos ID
+                                    val methodName = state.paymentMethodsCatalog.find { it.id == methodId }?.displayName ?: "Método: $methodId"
+                                    
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp)
+                                    ) {
+                                        RadioButton(
+                                            selected = (state.selectedPaymentMethodId == methodId),
+                                            onClick = { viewModel.selectPaymentMethod(methodId) }
+                                        )
+                                        Text(
+                                            text = methodName,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            modifier = Modifier.padding(start = 8.dp)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
                                 Button(
-                                    onClick = { showCancelDialog = true },
-                                    colors = ButtonDefaults.buttonColors(containerColor = UPetColors.Error),
-                                    modifier = Modifier.fillMaxWidth()
+                                    onClick = { viewModel.acceptWalk() },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    enabled = state.selectedPaymentMethodId != null && !state.isAccepting
                                 ) {
-                                    Text("Cancelar paseo")
+                                    if (state.isAccepting) {
+                                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+                                    } else {
+                                        Text("Aceptar Paseo")
+                                    }
+                                }
+                            } else {
+                                Text("Esperando paseador...", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                            
+                                // BOTÓN DE CANCELAR PASEO (Para Cliente)
+                                if (walk.status == "PENDING") {
+                                    Spacer(modifier = Modifier.height(24.dp))
+                                    Button(
+                                        onClick = { showCancelDialog = true },
+                                        colors = ButtonDefaults.buttonColors(containerColor = UPetColors.Error),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("Cancelar paseo")
+                                    }
                                 }
                             }
                         }
@@ -183,7 +237,7 @@ fun WalkDetailScreen(
                 }
             }
             
-            // Diálogo de confirmación
+            // Diálogo de confirmación de cancelación
             if (showCancelDialog) {
                 AlertDialog(
                     onDismissRequest = { showCancelDialog = false },

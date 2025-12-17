@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
     <cache-path name="images" path="." />
+    <!-- Agregar ruta de cache externo por si se usa en algunos dispositivos -->
+    <external-cache-path name="external_images" path="." />
 </paths>

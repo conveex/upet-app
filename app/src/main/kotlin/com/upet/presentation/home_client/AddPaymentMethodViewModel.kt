@@ -30,6 +30,7 @@ class AddPaymentMethodViewModel @Inject constructor(
                 _isLoading.value = true
                 val response = api.getPaymentMethodsCatalog()
                 if (response.isSuccessful) {
+                    // Revertido: Asignación directa de la lista
                     _catalog.value = response.body() ?: emptyList()
                 }
             } catch (e: Exception) {

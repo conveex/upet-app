@@ -3,19 +3,18 @@ package com.upet.data.remote.dto
 import kotlinx.serialization.Serializable
 
 data class RegisterWalkerRequest(
-    val name: String,
-    val bio: String,
     val email: String,
     val password: String,
-    val zone: String,
+    val name: String,
     val phone: String,
-    val main_address: String,
+    val mainAddress: String, // Correccion nombre (era main_address)
+    val bio: String,
     val experience: String,
     val serviceZoneLabel: String,
-    val serviceCenterLat: String,
-    val serviceCenterLng: String,
-    val zoneRadiusKm: String,
-    val maxDogsPerWalk: String
+    val serviceCenterLat: Double, // Cambio a Double
+    val serviceCenterLng: Double, // Cambio a Double
+    val zoneRadiusKm: Double,     // Cambio a Double
+    val maxDogsPerWalk: Int       // Cambio a Int
 )
 
 data class WalkerHomeResponse(
@@ -51,12 +50,12 @@ data class WalkerProfileDto(
     val bio: String?,
     val experience: String?,
     val serviceZoneLabel: String?,
-    val ratingAverage: Double,
-    val totalReviews: Int,
-    val maxDogs: Int,
-    val serviceCenterLat: String,
-    val serviceCenterLng: String,
-    val zoneRadiusKm: String,
+    val ratingAverage: Double?,
+    val totalReviews: Int?,
+    val maxDogs: Int?,
+    val serviceCenterLat: Double?, // Double
+    val serviceCenterLng: Double?, // Double
+    val zoneRadiusKm: Double?,     // Double
     val createdAt: String,
     val updatedAt: String
 )
@@ -73,10 +72,10 @@ data class UpdateWalkerRequest(
     val bio: String,
     val experience: String,
     val serviceZoneLabel: String?,
-    val maxDogs: String,
-    val serviceCenterLat: String,
-    val serviceCenterLng: String,
-    val zoneRadiusKm: String,
+    val maxDogs: Int,          // Int
+    val serviceCenterLat: Double, // Double
+    val serviceCenterLng: Double, // Double
+    val zoneRadiusKm: Double      // Double
 )
 
 data class UpdateWalkerPhotoRequest(

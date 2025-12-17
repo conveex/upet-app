@@ -11,32 +11,35 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class PendingWalksUiState(
+data class ClientActiveWalksUiState(
     val isLoading: Boolean = false,
-    val walks: List<WalkSummaryDto> = emptyList(),
+    val activeWalks: List<WalkSummaryDto> = emptyList(),
     val errorMessage: String? = null
 )
 
 @HiltViewModel
-class PendingWalksViewModel @Inject constructor(
+class ClientActiveWalksViewModel @Inject constructor(
     private val walksRepository: WalksRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(PendingWalksUiState())
+    private val _uiState = MutableStateFlow(ClientActiveWalksUiState())
     val uiState = _uiState.asStateFlow()
 
     init {
-        loadPendingWalks()
+        loadActiveWalks()
     }
 
-    fun loadPendingWalks() {
+    fun loadActiveWalks() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            val result = walksRepository.getClientPendingWalks()
+            
+            // Usamos el endpoint correcto del Sprint 5
+            val result = walksRepository.getClientActiveWalks()
+            
             result.fold(
                 onSuccess = { walks ->
                     _uiState.update { 
-                        it.copy(isLoading = false, walks = walks) 
+                        it.copy(isLoading = false, activeWalks = walks) 
                     }
                 },
                 onFailure = { error ->

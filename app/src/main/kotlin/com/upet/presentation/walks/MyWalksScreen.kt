@@ -8,7 +8,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -19,21 +22,21 @@ import com.upet.ui.theme.UPetColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WalkerWalksScreen(
-    viewModel: WalkerWalksViewModel = hiltViewModel(),
+fun MyWalksScreen(
     onNavigateBack: () -> Unit,
-    onWalkClick: (String) -> Unit // Para ver detalle (siguiente paso)
+    onWalkClick: (String) -> Unit,
+    viewModel: ClientActiveWalksViewModel = hiltViewModel() // Usamos el ViewModel del cliente
 ) {
     val state by viewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.loadAvailableWalks()
+        viewModel.loadActiveWalks()
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Paseos Disponibles") },
+                title = { Text("Mis Paseos Activos") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
@@ -50,9 +53,9 @@ fun WalkerWalksScreen(
         ) {
             if (state.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else if (state.availableWalks.isEmpty()) {
+            } else if (state.activeWalks.isEmpty()) {
                 Text(
-                    text = "No hay paseos disponibles en tu zona",
+                    text = "No tienes paseos activos en este momento.",
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.align(Alignment.Center)
                 )
@@ -62,8 +65,8 @@ fun WalkerWalksScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    items(state.availableWalks) { walk ->
-                        AvailableWalkCard(walk = walk, onClick = { onWalkClick(walk.id) })
+                    items(state.activeWalks) { walk ->
+                        ActiveWalkCard(walk = walk, onClick = { onWalkClick(walk.id) })
                     }
                 }
             }
@@ -82,14 +85,9 @@ fun WalkerWalksScreen(
 }
 
 @Composable
-fun AvailableWalkCard(
-    walk: WalkSummaryDto,
-    onClick: () -> Unit
-) {
+fun ActiveWalkCard(walk: WalkSummaryDto, onClick: () -> Unit) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -102,37 +100,23 @@ fun AvailableWalkCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = when(walk.type) {
-                        "A_TO_B" -> "Origen a Destino"
-                        "TIME" -> "Por Tiempo"
-                        "DISTANCE" -> "Por Distancia"
-                        else -> walk.type
-                    },
-                    style = MaterialTheme.typography.titleMedium,
+                    text = "Paseo ${walk.type}",
+                    style = MaterialTheme.typography.titleLarge,
                     color = UPetColors.Primary
                 )
                 Text(
-                    text = "$${walk.priceAmount} ${walk.priceCurrency}",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = UPetColors.TextPrimary
+                    text = when(walk.status) {
+                        "ACCEPTED" -> "Aceptado"
+                        "STARTED" -> "En Curso"
+                        else -> walk.status
+                    },
+                    style = MaterialTheme.typography.labelLarge,
+                    color = UPetColors.Secondary
                 )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-
-            Text("Inicio: ${walk.requestedStartTime.replace("T", " ")}")
-            Text("Distancia est: ${walk.estimatedDistanceMeters} m")
-            Text("Duración est: ${walk.estimatedDurationSeconds / 60} min")
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = onClick,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = UPetColors.Primary)
-            ) {
-                Text("Ver Detalle")
-            }
+            Text("Hora: ${walk.requestedStartTime.replace("T", " ")}")
         }
     }
 }

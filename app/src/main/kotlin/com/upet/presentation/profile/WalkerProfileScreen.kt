@@ -1,10 +1,14 @@
 package com.upet.presentation.profile
 
 import android.Manifest
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -13,10 +17,15 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -26,6 +35,7 @@ import coil.compose.AsyncImage
 import com.upet.ui.theme.UPetColors
 import com.upet.data.local.datastore.TokenDataStore
 import java.io.File
+import com.upet.presentation.components.ServiceZonePicker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,15 +77,18 @@ fun WalkerProfileScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
     val context = LocalContext.current
+    
+    // URI temporal para la cámara
     val photoUri = remember {
         FileProvider.getUriForFile(
             context,
             "${context.packageName}.provider",
-            File(context.cacheDir, "profile_photo.jpg")
+            File(context.cacheDir, "walker_profile_photo_temp.jpg")
         )
     }
-
-
+    
+    // Diálogo de selección de foto
+    var showImageSourceDialog by remember { mutableStateOf(false) }
 
     val takePhotoLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
@@ -84,11 +97,20 @@ fun WalkerProfileScreen(
             viewModel.updateWalkerPhoto(photoUri)
         }
     }
+    
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
             takePhotoLauncher.launch(photoUri)
+        }
+    }
+    
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.updateWalkerPhoto(uri)
         }
     }
 
@@ -113,11 +135,36 @@ fun WalkerProfileScreen(
             zoneRadiusKm = it.zoneRadiusKm?.toString().orEmpty()
         }
     }
+    
+    // Diálogo Cámara/Galería
+    if (showImageSourceDialog) {
+        AlertDialog(
+            onDismissRequest = { showImageSourceDialog = false },
+            title = { Text("Cambiar foto de perfil") },
+            text = { Text("Selecciona una opción:") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showImageSourceDialog = false
+                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                }) {
+                    Text("Cámara")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showImageSourceDialog = false
+                    galleryLauncher.launch("image/*")
+                }) {
+                    Text("Galería")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Perfil") },
+                title = { Text("Perfil de Paseador") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
@@ -137,52 +184,81 @@ fun WalkerProfileScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // FOTO DE PERFIL
+            // FOTO DE PERFIL CIRCULAR
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(Color.Gray.copy(alpha = 0.2f))
+                    .clickable(enabled = isEditing) { 
+                        showImageSourceDialog = true
+                    },
                 contentAlignment = Alignment.Center
             ) {
-                Text("Foto de perfil")
-               // if (photoUri != null) {
-                //                    AsyncImage(
-                //                        model = photoUri,
-                //                        contentDescription = "Foto de perfil",
-                //                        modifier = Modifier.fillMaxSize()
-                //                    )
-                //                } else {
-                //                    Text("Sin foto")
-                //                }
+                // Prioridad: Foto del usuario cargada > Placeholder
+                val currentPhotoUrl = user?.photoUrl
+                
+                if (!currentPhotoUrl.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = currentPhotoUrl,
+                        contentDescription = "Foto de perfil",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Sin foto",
+                        modifier = Modifier.size(60.dp),
+                        tint = Color.Gray
+                    )
+                }
 
-                // Botón para cambiar foto SOLO en edición
+                // Overlay de cámara SOLO en edición
                 if (isEditing) {
-                    IconButton(
-                        onClick = { cameraPermissionLauncher.launch(Manifest.permission.CAMERA) },
-                        modifier = Modifier.align(Alignment.BottomEnd)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.CameraAlt, contentDescription = "Cambiar foto")
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = "Cambiar foto",
+                            tint = Color.White
+                        )
                     }
                 }
             }
+            
+            if (isEditing) {
+                Text(
+                    text = "Toca para cambiar foto",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            } else {
+                Spacer(modifier = Modifier.height(24.dp))
+            }
 
-            // Nombre
+            // Nombre (No editable)
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
                 label = { Text("Nombre") },
-                enabled = isEditing,
+                enabled = false, 
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Email
+            // Email (No editable)
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Correo electrónico") },
-                enabled = false, // el email casi nunca debe editarse
+                enabled = false,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -205,7 +281,7 @@ fun WalkerProfileScreen(
             OutlinedTextField(
                 value = experience,
                 onValueChange = { experience = it },
-                label = { Text("Experiencia en el rubro") },
+                label = { Text("Experiencia") },
                 enabled = isEditing,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                 modifier = Modifier.fillMaxWidth()
@@ -217,31 +293,9 @@ fun WalkerProfileScreen(
             OutlinedTextField(
                 value = serviceZoneLabel,
                 onValueChange = { serviceZoneLabel = it },
-                label = { Text("serviceZoneLabel") },
+                label = { Text("Zona de servicio (nombre)") },
                 enabled = isEditing,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            //ratingAverage
-            OutlinedTextField(
-                value = ratingAverage,
-                onValueChange = { ratingAverage = it },
-                label = { Text("Rate promedio") },
-                enabled = false,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // totalReviews
-            OutlinedTextField(
-                value = totalReviews,
-                onValueChange = { totalReviews = it },
-                label = { Text("Total de opiniones") },
-                enabled = false,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -251,137 +305,137 @@ fun WalkerProfileScreen(
             OutlinedTextField(
                 value = maxDogs,
                 onValueChange = { maxDogs = it },
-                label = { Text("Cantidad máxima de perros") },
+                label = { Text("Máx. perros por paseo") },
                 enabled = isEditing,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            // serviceCenterLat
-            OutlinedTextField(
-                value = serviceCenterLat,
-                onValueChange = { serviceCenterLat = it },
-                label = { Text("serviceCenterLat") },
-                enabled = isEditing,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // serviceCenterLng
-            OutlinedTextField(
-                value = serviceCenterLng,
-                onValueChange = { serviceCenterLng = it },
-                label = { Text("serviceCenterLng") },
-                enabled = isEditing,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
+            
+            // Stats (Solo lectura)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                OutlinedTextField(
+                    value = ratingAverage,
+                    onValueChange = {},
+                    label = { Text("Calificación") },
+                    enabled = false,
+                    modifier = Modifier.weight(1f).padding(end = 8.dp)
+                )
+                OutlinedTextField(
+                    value = totalReviews,
+                    onValueChange = {},
+                    label = { Text("Opiniones") },
+                    enabled = false,
+                    modifier = Modifier.weight(1f).padding(start = 8.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // zoneRadiusKm
-            OutlinedTextField(
-                value = zoneRadiusKm,
-                onValueChange = { zoneRadiusKm = it },
-                label = { Text("zoneRadiusKm") },
-                enabled = isEditing,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
+            // ZONA DE SERVICIO (MAPA)
+            // Se mantiene la lógica existente
+            if (isEditing) {
+                Text("Ajustar zona de cobertura", style = MaterialTheme.typography.titleMedium, modifier = Modifier.align(Alignment.Start))
+                Spacer(modifier = Modifier.height(8.dp))
+                ServiceZonePicker(
+                    initialLat = serviceCenterLat.toDoubleOrNull() ?: 0.0,
+                    initialLng = serviceCenterLng.toDoubleOrNull() ?: 0.0,
+                    initialRadiusKm = zoneRadiusKm.toDoubleOrNull() ?: 1.0,
+                    onZoneChange = { newLat, newLng, newRadius ->
+                        serviceCenterLat = newLat.toString()
+                        serviceCenterLng = newLng.toString()
+                        zoneRadiusKm = newRadius.toString()
+                    }
+                )
+            } else {
+                // Modo lectura simplificado para datos de mapa
+                OutlinedTextField(
+                    value = "$serviceCenterLat, $serviceCenterLng",
+                    onValueChange = {},
+                    label = { Text("Centro de servicio") },
+                    enabled = false,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = "$zoneRadiusKm km",
+                    onValueChange = {},
+                    label = { Text("Radio de cobertura") },
+                    enabled = false,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Botón editar (solo aparece cuando NO estás editando)
-            if (!isEditing) {
-                Button(
-                    onClick = { isEditing = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = UPetColors.Primary
-                    )
-                ) {
-                    Icon(Icons.Default.Edit, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Editar perfil")
-                }
-            }
-
-            Button(
-                onClick = { onNavigateToPaymentMethods() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = UPetColors.Primary
-                )
+            // BOTONES ALINEADOS
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.Default.CreditCard, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Métodos de pago")
-            }
+                if (isEditing) {
+                    Button(
+                        onClick = {
+                            val lat = serviceCenterLat.toDoubleOrNull() ?: 0.0
+                            val lng = serviceCenterLng.toDoubleOrNull() ?: 0.0
+                            val radius = zoneRadiusKm.toDoubleOrNull() ?: 0.0
+                            val dogs = maxDogs.toIntOrNull() ?: 0
 
-            // Botón guardar cambios (solo aparece cuando SÍ estás editando)
-            if (isEditing) {
+                            isEditing = false
+                            viewModel.updateWalkerProfile(
+                                bio = bio,
+                                experience = experience,
+                                serviceZoneLabel = serviceZoneLabel,
+                                maxDogs = dogs,
+                                serviceCenterLat = lat,
+                                serviceCenterLng = lng,
+                                zoneRadiusKm = radius
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = UPetColors.Primary)
+                    ) {
+                        Icon(Icons.Default.Save, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Guardar cambios")
+                    }
+                } else {
+                    Button(
+                        onClick = { isEditing = true },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = UPetColors.Primary)
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Editar perfil")
+                    }
+                }
+
+                Button(
+                    onClick = { onNavigateToPaymentMethods() },
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = UPetColors.Secondary)
+                ) {
+                    Icon(Icons.Default.CreditCard, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Métodos de pago")
+                }
+
                 Button(
                     onClick = {
-                        isEditing = false
-                        viewModel.updateWalkerProfile(
-                            name = name,
-                            bio = bio,
-                            experience = experience,
-                            serviceZoneLabel = serviceZoneLabel,
-                            ratingAverage = ratingAverage,
-                            totalReviews = totalReviews,
-                            maxDogs = maxDogs,
-                            serviceCenterLat = serviceCenterLat,
-                            serviceCenterLng = serviceCenterLng,
-                            zoneRadiusKm = zoneRadiusKm
-                        )
+                        viewModel.logout { onLogout() }
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = UPetColors.Primary
-                    )
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = UPetColors.Error)
                 ) {
-                    Text("Guardar cambios")
+                    Icon(Icons.Default.ExitToApp, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Cerrar sesión")
                 }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Botón cerrar sesión
-            Button(
-                onClick = {
-                    viewModel.logout {
-                        onLogout()
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = UPetColors.Error
-                )
-            ) {
-                Icon(Icons.Default.ExitToApp, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Cerrar sesión")
-            }
-
 
             Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }
-
-

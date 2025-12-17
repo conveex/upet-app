@@ -4,12 +4,14 @@ import android.util.Log
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.PolyUtil
 import com.upet.data.remote.ApiService
-import com.upet.data.remote.dto.AvailableWalkDto
+import com.upet.data.remote.dto.AcceptWalkRequest
 import com.upet.data.remote.dto.CalculateRouteRequestDto
 import com.upet.data.remote.dto.CreateWalkRequest
+import com.upet.data.remote.dto.EndWalkRequest
 import com.upet.data.remote.dto.LatLngDto
-import com.upet.data.remote.dto.PendingWalkDto
+import com.upet.data.remote.dto.StartWalkRequest
 import com.upet.data.remote.dto.WalkDetailDto
+import com.upet.data.remote.dto.WalkSummaryDto
 import com.upet.data.remote.dto.WalkType
 import com.upet.presentation.walks.RouteOptionUi
 import java.time.Instant
@@ -74,20 +76,12 @@ class WalksRepository @Inject constructor(
         requestedStartTime: String? = null // ISO string
     ): Result<String> {
 
-        // Formato ISO-8601 estricto (YYYY-MM-DDTHH:MM:SS) sin milisegundos si es posible
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
-            .withZone(ZoneOffset.UTC)
-
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss").withZone(ZoneOffset.UTC)
         val startTime = requestedStartTime ?: formatter.format(Instant.now().plus(10, ChronoUnit.MINUTES))
-
         val originDto = LatLngDto(origin.latitude, origin.longitude)
         val destinationDto = destination?.let { LatLngDto(it.latitude, it.longitude) }
-
-        // Asumimos pickup = origen y dropoff = destino (o origen si es circular)
         val pickupDto = originDto
         val dropoffDto = destinationDto ?: originDto
-        
-        // Aseguramos que distancia y duracion sean > 0
         val finalDistance = if (distanceMeters > 0) distanceMeters else 100
         val finalDuration = if (durationSeconds > 0) durationSeconds else 60
 
@@ -106,44 +100,78 @@ class WalksRepository @Inject constructor(
             paymentMethodIds = paymentMethodIds
         )
 
-        Log.d("RequestWalk", "Creating walk with request: $request")
-
         try {
             val response = api.createWalk(request)
             if (response.isSuccessful && response.body()?.success == true) {
-                // Ahora accedemos a walk.id
                 return Result.success(response.body()!!.walk.id)
             } else {
                 val errorBody = response.errorBody()?.string()
-                Log.e("RequestWalk", "Error crear paseo: ${response.code()} - $errorBody")
                 return Result.failure(Exception("Error al crear paseo (${response.code()}): $errorBody"))
             }
         } catch (e: Exception) {
-            Log.e("RequestWalk", "Exception crear paseo", e)
             return Result.failure(e)
         }
     }
 
-    suspend fun getPendingWalks(): Result<List<PendingWalkDto>> {
-        try {
+    suspend fun getClientPendingWalks(): Result<List<WalkSummaryDto>> {
+        return try {
             val response = api.getClientPendingWalks()
             if (response.isSuccessful && response.body()?.success == true) {
-                return Result.success(response.body()!!.walks)
+                Result.success(response.body()!!.walks)
             } else {
-                return Result.failure(Exception("Error al obtener paseos pendientes: ${response.code()}"))
+                Result.failure(Exception("Error al obtener paseos pendientes: ${response.code()}"))
             }
         } catch (e: Exception) {
-            return Result.failure(e)
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun getClientActiveWalks(): Result<List<WalkSummaryDto>> {
+        return try {
+            val response = api.getClientActiveWalks()
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.success(response.body()!!.walks)
+            } else {
+                Result.failure(Exception("Error al obtener paseos activos: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun getWalkerActiveWalks(): Result<List<WalkSummaryDto>> {
+        return try {
+            val response = api.getWalkerActiveWalks()
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.success(response.body()!!.walks)
+            } else {
+                Result.failure(Exception("Error al obtener paseos de paseador: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
     suspend fun getWalkDetail(walkId: String): Result<WalkDetailDto> {
-        try {
+        return try {
             val response = api.getWalkDetail(walkId)
             if (response.isSuccessful && response.body()?.success == true) {
-                return Result.success(response.body()!!.walk)
+                Result.success(response.body()!!.walk)
             } else {
-                return Result.failure(Exception("Error al obtener detalle del paseo: ${response.code()}"))
+                Result.failure(Exception("Error al obtener detalle del paseo: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun getAvailableWalkDetail(walkId: String): Result<WalkDetailDto> {
+        return try {
+            val response = api.getAvailableWalkDetail(walkId)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.success(response.body()!!.walk)
+            } else {
+                Result.failure(Exception("Error al obtener detalle de paseo disponible: ${response.code()}"))
             }
         } catch (e: Exception) {
             return Result.failure(e)
@@ -151,28 +179,70 @@ class WalksRepository @Inject constructor(
     }
 
     suspend fun cancelWalk(walkId: String): Result<Boolean> {
-        try {
+        return try {
             val response = api.cancelWalk(walkId)
             if (response.isSuccessful && response.body()?.success == true) {
-                return Result.success(true)
+                Result.success(true)
             } else {
-                return Result.failure(Exception("Error al cancelar el paseo: ${response.code()}"))
+                Result.failure(Exception("Error al cancelar el paseo: ${response.code()}"))
             }
         } catch (e: Exception) {
-            return Result.failure(e)
+            Result.failure(e)
         }
     }
 
-    suspend fun getAvailableWalks(): Result<List<AvailableWalkDto>> {
-        try {
+    suspend fun getAvailableWalks(): Result<List<WalkSummaryDto>> {
+        return try {
             val response = api.getAvailableWalks()
             if (response.isSuccessful && response.body()?.success == true) {
-                return Result.success(response.body()!!.walks)
+                Result.success(response.body()!!.walks)
             } else {
-                return Result.failure(Exception("Error al obtener paseos disponibles: ${response.code()}"))
+                Result.failure(Exception("Error al obtener paseos disponibles: ${response.code()}"))
             }
         } catch (e: Exception) {
-            return Result.failure(e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun acceptWalk(walkId: String, agreedPaymentMethodId: String): Result<WalkDetailDto> {
+        return try {
+            val request = AcceptWalkRequest(agreedPaymentMethodId = agreedPaymentMethodId)
+            val response = api.acceptWalk(walkId, request)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.success(response.body()!!.walk)
+            } else {
+                Result.failure(Exception("Error al aceptar el paseo: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun startWalk(walkId: String, lat: Double, lng: Double): Result<WalkDetailDto> {
+        return try {
+            val request = StartWalkRequest(lat, lng)
+            val response = api.startWalk(walkId, request)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.success(response.body()!!.walk)
+            } else {
+                Result.failure(Exception("Error al iniciar el paseo: ${response.code()}"))
+            }
+        } catch(e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun endWalk(walkId: String, lat: Double, lng: Double): Result<WalkDetailDto> {
+        return try {
+            val request = EndWalkRequest(lat, lng)
+            val response = api.endWalk(walkId, request)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.success(response.body()!!.walk)
+            } else {
+                Result.failure(Exception("Error al finalizar el paseo: ${response.code()}"))
+            }
+        } catch(e: Exception) {
+            Result.failure(e)
         }
     }
 }

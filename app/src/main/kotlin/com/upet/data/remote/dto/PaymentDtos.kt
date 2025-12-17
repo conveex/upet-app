@@ -26,7 +26,3 @@ data class AddPaymentMethodResponse(
     val message: String,
     val methods: List<ClientPaymentMethodDto>
 )
-
-
-
-

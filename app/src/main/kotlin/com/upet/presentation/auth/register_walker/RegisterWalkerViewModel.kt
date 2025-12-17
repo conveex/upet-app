@@ -1,38 +1,33 @@
 package com.upet.presentation.auth.register_walker
 
-import android.util.Log
-import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import com.upet.data.remote.ApiService
-import com.upet.data.remote.dto.RegisterWalkerRequest
+import com.upet.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class RegisterWalkerViewModel @Inject constructor(
-    private val api: ApiService
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    var isLoading by mutableStateOf(false)
-        private set
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
 
-    var errorMessage by mutableStateOf<String?>(null)
-        private set
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage = _errorMessage.asStateFlow()
 
-    // CAMBIO: variable para saber si el registro fue exitoso
-    var successMessage by mutableStateOf<String?>(null)
-        private set
+    private val _successMessage = MutableStateFlow<String?>(null)
+    val successMessage = _successMessage.asStateFlow()
 
     fun registerWalker(
         name: String,
         bio: String,
         email: String,
         password: String,
-        zone: String,
         phone: String,
         address: String,
         experience: String,
@@ -40,51 +35,58 @@ class RegisterWalkerViewModel @Inject constructor(
         serviceCenterLat: String,
         serviceCenterLng: String,
         zoneRadiusKm: String,
-        maxDogsPerWalk: String,
-        onSuccess: () -> Unit
+        maxDogsPerWalk: String
     ) {
-        viewModelScope.launch {
-            isLoading = true
-            errorMessage = null
-            successMessage = null  // CAMBIO: limpiar éxito previo
+        if (name.isBlank() || email.isBlank() || password.isBlank() ||
+            phone.isBlank() || address.isBlank() || serviceZoneLabel.isBlank()) {
+            _errorMessage.value = "Por favor completa los campos obligatorios."
+            return
+        }
 
-            val request = RegisterWalkerRequest(
+        val lat = serviceCenterLat.toDoubleOrNull()
+        val lng = serviceCenterLng.toDoubleOrNull()
+        val radius = zoneRadiusKm.toDoubleOrNull()
+        val maxDogs = maxDogsPerWalk.toIntOrNull()
+
+        if (lat == null || lng == null || radius == null || maxDogs == null) {
+            _errorMessage.value = "Latitud, Longitud, Radio y Máx. Perros deben ser numéricos."
+            return
+        }
+
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+            _successMessage.value = null
+
+            val result = authRepository.registerWalker(
                 name = name,
                 bio = bio,
                 email = email,
                 password = password,
-                zone = zone,
                 phone = phone,
-                main_address =  address,
+                mainAddress = address,
                 experience = experience,
                 serviceZoneLabel = serviceZoneLabel,
-                serviceCenterLat = serviceCenterLat,
-                serviceCenterLng = serviceCenterLng,
-                zoneRadiusKm = zoneRadiusKm,
-                maxDogsPerWalk = maxDogsPerWalk
-                //isClient = false,
-                //isWalker = true
+                serviceCenterLat = lat,
+                serviceCenterLng = lng,
+                zoneRadiusKm = radius,
+                maxDogsPerWalk = maxDogs
             )
 
-            try {
-                Log.d("WalkerRegister", "Address enviada: $address")
-                val response = api.registerWalker(request)
-
-                if (response.isSuccessful && response.body()?.success == true) {
-                    // CAMBIO: indicar éxito para mostrar Toast
-                    successMessage = "Registro exitoso"
-
-                    // CAMBIO: llamar onSuccess después de setear mensaje
-                    onSuccess()
-                } else {
-                    errorMessage = response.body()?.message ?: "Error desconocido"
+            result.fold(
+                onSuccess = {
+                    _isLoading.value = false
+                    _successMessage.value = "Registro exitoso. Tu cuenta está pendiente de aprobación."
+                },
+                onFailure = { exception ->
+                    _isLoading.value = false
+                    _errorMessage.value = exception.message ?: "Error desconocido al registrarse"
                 }
-
-            } catch (e: Exception) {
-                errorMessage = e.message
-            } finally {
-                isLoading = false
-            }
+            )
         }
+    }
+
+    fun clearError() {
+        _errorMessage.value = null
     }
 }

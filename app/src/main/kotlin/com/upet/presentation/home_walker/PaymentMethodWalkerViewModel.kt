@@ -25,6 +25,10 @@ class PaymentMethodsWalkerViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error = _error.asStateFlow()
 
+    init {
+        loadPaymentMethods()
+    }
+
     fun loadPaymentMethods() {
         viewModelScope.launch {
             try {
@@ -68,4 +72,3 @@ class PaymentMethodsWalkerViewModel @Inject constructor(
         }
     }
 }
-

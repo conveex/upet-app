@@ -71,34 +71,31 @@ class WalkerProfileViewModel @Inject constructor(
     }
 
     fun updateWalkerProfile(
-        name: String,
         bio: String,
         experience: String,
         serviceZoneLabel: String,
-        ratingAverage: String,
-        totalReviews: String,
-        maxDogs: String,
-        serviceCenterLat: String,
-        serviceCenterLng: String,
-        zoneRadiusKm: String
+        maxDogs: Int,
+        serviceCenterLat: Double,
+        serviceCenterLng: Double,
+        zoneRadiusKm: Double
     ) {
         viewModelScope.launch {
             try {
                 _isLoading.value = true
 
-                val response = api.updateProfileWalker(
-                    UpdateWalkerRequest(
-                        bio = bio,
-                        experience = experience,
-                        serviceZoneLabel = serviceZoneLabel,
-                        maxDogs = maxDogs,
-                        serviceCenterLat = serviceCenterLat,
-                        serviceCenterLng = serviceCenterLng,
-                        zoneRadiusKm = zoneRadiusKm
-                    )
+                val request = UpdateWalkerRequest(
+                    bio = bio,
+                    experience = experience,
+                    serviceZoneLabel = serviceZoneLabel,
+                    maxDogs = maxDogs,
+                    serviceCenterLat = serviceCenterLat,
+                    serviceCenterLng = serviceCenterLng,
+                    zoneRadiusKm = zoneRadiusKm
                 )
+                
+                val response = api.updateProfileWalker(request)
 
-                if (response.isSuccessful) {
+                if (response.isSuccessful && response.body()?.success == true) {
                     loadWalkerProfile() // refresca datos
                 } else {
                     _error.value = "No se pudieron guardar los cambios"
@@ -144,6 +141,14 @@ class WalkerProfileViewModel @Inject constructor(
                 _isLoading.value = false
             }
         }
+    }
+
+    fun updateProfile(name: String, phone: String, address: String) {
+        // Implementar si es necesario para walker user data básica
+    }
+    
+    fun deactivateAccount(onSuccess: () -> Unit) {
+        // Implementar
     }
 
 }
