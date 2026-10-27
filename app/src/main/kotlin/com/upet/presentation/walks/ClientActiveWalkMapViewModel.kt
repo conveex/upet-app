@@ -31,14 +31,22 @@ class ClientActiveWalkMapViewModel @Inject constructor(
     private val trackingRepository: WalkTrackingRepository
 ) : ViewModel() {
 
-    private val walkId: String = savedStateHandle.get<String>("walkId")!!
+    private val walkId: String = savedStateHandle["walkId"]!!
 
     private val _uiState = MutableStateFlow(ClientMapUiState())
     val uiState = _uiState.asStateFlow()
 
     init {
-        loadInitialData()
-        observeWalkerLocation()
+        val id = savedStateHandle.get<String>("walkId")
+
+        if (id.isNullOrBlank()) {
+            _uiState.update {
+                it.copy(isLoading = false, errorMessage = "walkId no llegó (NavGraph)")
+            }
+        } else {
+            loadInitialData()
+            observeWalkerLocation(id)
+        }
     }
 
     private fun loadInitialData() {
@@ -55,7 +63,7 @@ class ClientActiveWalkMapViewModel @Inject constructor(
         }
     }
 
-    private fun observeWalkerLocation() {
+    private fun observeWalkerLocation(walkId: String) {
         trackingRepository.observeWalkerLocation(walkId)
             .onEach { location ->
                 _uiState.update { it.copy(walkerLocation = location, isLoading = false) }

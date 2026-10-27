@@ -5,7 +5,6 @@ import android.content.Intent
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.gms.maps.model.LatLng
 import com.upet.data.repository.LocationTracker
 import com.upet.data.repository.WalkTrackingRepository
 import com.upet.data.service.LocationService
@@ -35,16 +34,24 @@ class WalkerActiveWalkMapViewModel @Inject constructor(
     private val locationTracker: LocationTracker
 ) : ViewModel() {
 
-    private val walkId: String = savedStateHandle.get<String>("walkId")!!
+    private val walkId: String = savedStateHandle["walkId"]!!
 
     private val _uiState = MutableStateFlow(WalkerMapUiState())
     val uiState = _uiState.asStateFlow()
 
     init {
-        observeWalkStatus()
+        val id = savedStateHandle.get<String>("walkId")
+
+        if (id.isNullOrBlank()) {
+            _uiState.update {
+                it.copy(isLoading = false, errorMessage = "walkId no llegó (NavGraph)")
+            }
+        } else {
+            observeWalkStatus(id)
+        }
     }
 
-    private fun observeWalkStatus() {
+    private fun observeWalkStatus(walkId: String) {
         trackingRepository.observeTrackingMeta(walkId)
             .onEach { meta ->
                 _uiState.update { it.copy(isTracking = meta.active, routePolyline = meta.polylineEncoded, isLoading = false) }
@@ -62,10 +69,30 @@ class WalkerActiveWalkMapViewModel @Inject constructor(
 
     fun startWalk() {
         viewModelScope.launch {
-            locationTracker.getCurrentLocation()?.let { 
-                val result = trackingRepository.startWalk(walkId, it.latitude, it.longitude)
-                result.onFailure {
-                    _uiState.update { state -> state.copy(errorMessage = it.message) }
+
+            val location = locationTracker.getCurrentLocation()
+
+            if (location == null) {
+                _uiState.update {
+                    it.copy(
+                        errorMessage =
+                            "No fue posible obtener tu ubicación. " +
+                                    "Comprueba que tengas el GPS activado " +
+                                    "y hayas permitido la ubicación precisa."
+                    )
+                }
+                return@launch
+            }
+
+            val result = trackingRepository.startWalk(
+                walkId,
+                location.latitude,
+                location.longitude
+            )
+
+            result.onFailure { error ->
+                _uiState.update {
+                    it.copy(errorMessage = error.message)
                 }
             }
         }
@@ -86,7 +113,8 @@ class WalkerActiveWalkMapViewModel @Inject constructor(
         Intent(context, LocationService::class.java).apply {
             action = LocationService.ACTION_START
             putExtra("walkId", walkId)
-            context.startService(this)
+            androidx.core.content.ContextCompat
+                .startForegroundService(context, this)
         }
     }
     

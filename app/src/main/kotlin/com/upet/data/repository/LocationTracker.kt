@@ -13,6 +13,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.google.android.gms.tasks.CancellationTokenSource
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeoutOrNull
 
 @Singleton
 class LocationTracker @Inject constructor(
@@ -52,26 +56,63 @@ class LocationTracker @Inject constructor(
             client.removeLocationUpdates(callback)
         }
     }
-    
-    suspend fun getCurrentLocation(): LatLng? {
-        val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
-        if (!hasFine && !hasCoarse) {
+
+    suspend fun getCurrentLocation(): LatLng? {
+
+        // Para las validaciones de proximidad del paseo
+        // necesitamos permiso de ubicación precisa.
+        val hasFinePermission =
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        if (!hasFinePermission) {
             return null
         }
-        
+
+        val cancellationSource = CancellationTokenSource()
+
         return try {
-            // Usamos una task de Play Services convertida a corrutina o callback simple
-            // Simplificación usando callbackFlow temporal si es necesario, o Tasks.await
-            // Pero FusedLocationProviderClient tiene `lastLocation`
-            val task = client.lastLocation
-            // Implementación básica sin Tasks.await (requiere librería coroutines-play-services)
-            // Para no complicar dependencias, retornamos null y confiamos en el flow.
-            // O mejor, usamos el flow para obtener un valor y cerrarlo.
+
+            // Permite reutilizar una ubicación muy reciente
+            // o solicitar una ubicación nueva del dispositivo.
+            val request = CurrentLocationRequest.Builder()
+                .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                .setMaxUpdateAgeMillis(5_000L)
+                .setDurationMillis(15_000L)
+                .build()
+
+            // Evita que la operación quede esperando
+            // indefinidamente si no hay señal GPS.
+            val location = withTimeoutOrNull(17_000L) {
+                client.getCurrentLocation(
+                    request,
+                    cancellationSource.token
+                ).await()
+            }
+
+            if (location != null) {
+                LatLng(
+                    location.latitude,
+                    location.longitude
+                )
+            } else {
+                null
+            }
+
+        } catch (e: CancellationException) {
+            throw e
+
+        } catch (e: SecurityException) {
             null
+
         } catch (e: Exception) {
             null
+
+        } finally {
+            cancellationSource.cancel()
         }
     }
 }

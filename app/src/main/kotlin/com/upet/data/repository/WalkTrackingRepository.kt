@@ -1,6 +1,5 @@
 package com.upet.data.repository
 
-import android.util.Log
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.snapshots
@@ -8,9 +7,7 @@ import com.upet.data.remote.ApiService
 import com.upet.data.remote.dto.EndWalkRequest
 import com.upet.data.remote.dto.StartWalkRequest
 import com.upet.data.remote.dto.WalkDetailDto
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton

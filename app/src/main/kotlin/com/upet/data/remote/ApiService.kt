@@ -18,6 +18,7 @@ import com.upet.data.remote.dto.CreateWalkResponse
 import com.upet.data.remote.dto.DeactivateAccountResponse
 import com.upet.data.remote.dto.DeletePetResponse
 import com.upet.data.remote.dto.EndWalkRequest
+import com.upet.data.remote.dto.FirebaseCustomTokenResponse
 import com.upet.data.remote.dto.LoginRequest
 import com.upet.data.remote.dto.LoginResponse
 import com.upet.data.remote.dto.PaymentMethodCatalogDto
@@ -230,4 +231,9 @@ interface ApiService {
     suspend fun updateFcmToken(
         @Body request: UpdateFcmTokenRequest
     ): Response<UpdateFcmTokenResponse>
+
+    // ---------- FIREBASE AUTH ----------
+    @GET("api/v1/auth/firebase-token")
+    suspend fun getFirebaseCustomToken():
+            Response<FirebaseCustomTokenResponse>
 }

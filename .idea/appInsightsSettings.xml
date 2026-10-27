@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.cnvx.upet" />
+                  <option name="mobileSdkAppId" value="1:935662695130:android:6070c44dce743b6be76be3" />
+                  <option name="projectId" value="upet-41d54" />
+                  <option name="projectNumber" value="935662695130" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

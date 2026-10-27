@@ -26,9 +26,16 @@ import com.upet.ui.theme.UPetColors
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WalkerActiveWalkMapScreen(
+    walkId: String,
     onNavigateBack: () -> Unit,
     viewModel: WalkerActiveWalkMapViewModel = hiltViewModel()
 ) {
+
+    if (walkId.isBlank()) {
+        Text("walkId inválido", color = MaterialTheme.colorScheme.error)
+        return
+    }
+
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var hasLocationPermission by remember { mutableStateOf(false) }

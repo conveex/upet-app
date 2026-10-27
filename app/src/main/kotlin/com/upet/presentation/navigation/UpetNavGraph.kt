@@ -264,20 +264,44 @@ fun UpetNavGraph(navController: NavHostController) {
         // MAPA ACTIVO (CLIENTE)
         composable(
             route = "client_active_map/{walkId}",
-            arguments = listOf(navArgument("walkId") { type = NavType.StringType })
-        ) {
+            arguments = listOf(
+                navArgument("walkId") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+
+            val walkId = backStackEntry.arguments
+                ?.getString("walkId")
+                ?: return@composable
+
             ClientActiveWalkMapScreen(
-                onNavigateBack = { navController.popBackStack() }
+                walkId = walkId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
             )
         }
 
         // MAPA ACTIVO (PASEADOR)
         composable(
             route = "walker_active_map/{walkId}",
-            arguments = listOf(navArgument("walkId") { type = NavType.StringType })
-        ) {
+            arguments = listOf(
+                navArgument("walkId") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+
+            val walkId = backStackEntry.arguments
+                ?.getString("walkId")
+                ?: return@composable
+
             WalkerActiveWalkMapScreen(
-                onNavigateBack = { navController.popBackStack() }
+                walkId = walkId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
             )
         }
     }

@@ -10,25 +10,71 @@ import javax.inject.Inject
 
 class AuthRepository @Inject constructor(
     private val api: ApiService,
-    private val tokenDataStore: TokenDataStore
+    private val tokenDataStore: TokenDataStore,
+    private val firebaseSessionRepository: FirebaseSessionRepository
 ) {
 
-    suspend fun login(email: String, password: String): Result<String> {
-        return try {
-            val response = api.login(LoginRequest(email, password))
-            if (response.isSuccessful && response.body()?.success == true) {
-                val body = response.body()!!
-                tokenDataStore.saveToken(body.token)
-                tokenDataStore.saveUserId(body.user.id)
-                tokenDataStore.saveUserType(body.user.isWalker) // Este método debe estar en TokenDataStore
+    suspend fun login(
+        email: String,
+        password: String
+    ): Result<String> {
 
-                Log.d("AuthRepository", "Login success, token saved. UserID: ${body.user.id}")
-                Result.success(body.token)
-            } else {
-                val errorMsg = response.errorBody()?.string() ?: "Error desconocido"
-                Result.failure(Exception("Login fallido: $errorMsg"))
+        return try {
+            // 1. Limpiar cualquier sesión anterior para evitar
+            // mezclar identidades de distintos usuarios.
+            firebaseSessionRepository.signOut()
+            tokenDataStore.clear()
+
+            // 2. Autenticación normal contra Ktor.
+            val response = api.login(
+                LoginRequest(email, password)
+            )
+
+            val body = response.body()
+                ?: throw IllegalStateException(
+                    "El backend no devolvió datos de autenticación."
+                )
+
+            if (!response.isSuccessful || !body.success) {
+                throw IllegalStateException(
+                    "No fue posible iniciar sesión en UPet. " +
+                            "HTTP ${response.code()}"
+                )
             }
+
+            // 3. Guardar temporalmente el JWT de Ktor.
+            // El interceptor lo utilizará en la siguiente petición.
+            tokenDataStore.saveToken(body.token)
+
+            // 4. Solicitar el token Firebase y establecer la sesión.
+            firebaseSessionRepository.signIn(
+                expectedUserId = body.user.id
+            )
+
+            // 5. Guardar los datos del usuario solo cuando
+            // ambas autenticaciones se hayan completado.
+            tokenDataStore.saveUserId(body.user.id)
+            tokenDataStore.saveUserType(body.user.isWalker)
+
+            Log.d(
+                "AuthRepository",
+                "Sesión UPet y Firebase iniciada correctamente"
+            )
+
+            Result.success(body.token)
+
         } catch (e: Exception) {
+
+            // Si falla cualquier parte del login,
+            // evitamos dejar una sesión incompleta.
+            firebaseSessionRepository.signOut()
+            tokenDataStore.clear()
+
+            Log.e(
+                "AuthRepository",
+                "Error de autenticación: ${e.message}"
+            )
+
             Result.failure(e)
         }
     }

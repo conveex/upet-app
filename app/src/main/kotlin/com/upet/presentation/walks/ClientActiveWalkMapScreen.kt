@@ -25,9 +25,16 @@ import com.google.maps.android.compose.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClientActiveWalkMapScreen(
+    walkId: String,
     onNavigateBack: () -> Unit,
     viewModel: ClientActiveWalkMapViewModel = hiltViewModel()
 ) {
+
+    if (walkId.isBlank()) {
+        Text("walkId inválido", color = MaterialTheme.colorScheme.error)
+        return
+    }
+
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var hasLocationPermission by remember { mutableStateOf(false) }

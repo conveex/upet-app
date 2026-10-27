@@ -55,6 +55,7 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-messaging")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
@@ -88,18 +89,16 @@ dependencies {
     //Coil
     implementation("io.coil-kt:coil-compose:2.6.0")
 
-
     //Google Maps
     implementation("com.google.android.gms:play-services-location:21.2.0")
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.maps.android:maps-compose:2.11.4")
     implementation("com.google.maps.android:android-maps-utils:3.8.2")
 
-
     //Timber
     implementation("com.jakewharton.timber:timber:5.0.1")
 
-    //Icono xd
+    //Icono
     implementation("androidx.compose.material:material-icons-extended")
 
     implementation(libs.androidx.core.ktx)
