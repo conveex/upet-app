@@ -9,15 +9,15 @@ import androidx.navigation.navArgument
 
 // screens
 import com.upet.ui.screens.auth.LoginScreen
-import com.upet.ui.screens.auth.RegisterClientScreen
-import com.upet.ui.screens.client.ClientHomeScreen
+import com.upet.presentation.auth.register_client.RegisterClientScreen
+import com.upet.presentation.home_client.ClientHomeScreen
 import com.upet.ui.screens.walker.WalkerHomeScreen
 import com.upet.presentation.auth.register_walker.RegisterWalkerScreen
 import com.upet.presentation.pets.AddPetScreen
 import com.upet.presentation.profile.ClientProfileScreen
 import com.upet.presentation.profile.WalkerProfileScreen
-import com.upet.presentation.walks.WalkerWalksScreen // Para paseos disponibles
-import com.upet.presentation.walks.WalkerActiveWalksScreen // Para paseos activos
+import com.upet.presentation.walks.WalkerWalksScreen
+import com.upet.presentation.walks.WalkerActiveWalksScreen
 import com.upet.presentation.walks.RequestWalkScreen
 import com.upet.presentation.walks.PendingWalksScreen
 import com.upet.presentation.walks.WalkDetailScreen
@@ -26,7 +26,7 @@ import com.upet.presentation.home_client.AddPaymentMethodScreen
 import com.upet.presentation.home_client.PaymentMethodsScreen
 import com.upet.presentation.home_walker.AddPaymentMethodWalkerScreen
 import com.upet.presentation.home_walker.PaymentMethodsWalkerScreen
-import com.upet.presentation.walks.ClientActiveWalksScreen
+import com.upet.presentation.walks.MyWalksScreen // <--- CAMBIO AQUÍ: Importamos MyWalksScreen
 import com.upet.presentation.walks.ClientActiveWalkMapScreen
 import com.upet.presentation.walks.WalkerActiveWalkMapScreen
 
@@ -68,21 +68,15 @@ fun UpetNavGraph(navController: NavHostController) {
                         popUpTo(UpetScreen.Login.route) { inclusive = true }
                     }
                 },
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
         // REGISTRO PASEADOR
         composable(UpetScreen.RegisterWalker.route) {
             RegisterWalkerScreen(
-                onRegisterSuccess = {
-                    navController.popBackStack()
-                },
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
+                onRegisterSuccess = { navController.popBackStack() },
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
@@ -91,7 +85,7 @@ fun UpetNavGraph(navController: NavHostController) {
             ClientHomeScreen(
                 onNavigateToProfile = { navController.navigate(UpetScreen.Profile.route) },
                 onNavigateToRequestWalk = { navController.navigate("request_walk") },
-                onNavigateToActiveWalks = { navController.navigate("client_active_walks") }, // Ruta específica para cliente
+                onNavigateToActiveWalks = { navController.navigate("client_active_walks") },
                 onNavigateToPendingWalks = { navController.navigate("pending_walks") },
                 onNavigateToAddPet = { navController.navigate(UpetScreen.AddPet.route) },
                 onNavigateToPetDetail = { petId -> navController.navigate("pet_detail/$petId") }
@@ -102,31 +96,29 @@ fun UpetNavGraph(navController: NavHostController) {
         composable(UpetScreen.WalkerHome.route) {
             WalkerHomeScreen(
                 onNavigateToProfile = { navController.navigate("profile_walker") },
-                onNavigateToAvailableWalks = { navController.navigate("available_walks") }, // Paseos para aceptar
-                onNavigateToMyWalks = { navController.navigate("walker_active_walks") } // Paseos ya aceptados/activos
+                onNavigateToAvailableWalks = { navController.navigate("available_walks") },
+                onNavigateToMyWalks = { navController.navigate("walker_active_walks") }
             )
         }
 
-        //CLIENT PROFILE
+        // CLIENT PROFILE
         composable(UpetScreen.Profile.route) {
             ClientProfileScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToPaymentMethods = {
-                    navController.navigate("payment_methods") },
+                onNavigateToPaymentMethods = { navController.navigate("payment_methods") },
                 onLogout = {
-                    navController.navigate(UpetScreen.Login.route) {
-                        popUpTo(0) // limpia toda la pila
-                    }
+                    navController.navigate(UpetScreen.Login.route) { popUpTo(0) }
                 }
             )
         }
-        //ADD PET
+
+        // ADD PET
         composable(UpetScreen.AddPet.route) {
             AddPetScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-        
+
         // PASEOS DISPONIBLES (WALKER)
         composable("available_walks") {
             WalkerWalksScreen(
@@ -136,19 +128,18 @@ fun UpetNavGraph(navController: NavHostController) {
                 }
             )
         }
-        
+
         // PASEOS ACTIVOS (WALKER)
         composable("walker_active_walks") {
             WalkerActiveWalksScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onWalkClick = { walkId ->
-                    // Redirigir al mapa activo del paseador
                     navController.navigate("walker_active_map/$walkId")
                 }
             )
         }
-        
-        //RequestWalk
+
+        // RequestWalk
         composable(UpetScreen.RequestWalk.route){
             RequestWalkScreen(
                 onNavigateBack = { navController.popBackStack() },
@@ -159,20 +150,19 @@ fun UpetNavGraph(navController: NavHostController) {
                 }
             )
         }
-        //WalkerProfile
+
+        // WalkerProfile
         composable(UpetScreen.WalkerProfile.route){
             WalkerProfileScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToPaymentMethods = {
-                    navController.navigate("payment_methods_walker") }, // Ruta específica para walker
+                onNavigateToPaymentMethods = { navController.navigate("payment_methods_walker") },
                 onLogout = {
-                    navController.navigate(UpetScreen.Login.route) {
-                        popUpTo(0) // limpia toda la pila
-                    }
+                    navController.navigate(UpetScreen.Login.route) { popUpTo(0) }
                 }
             )
         }
-        //Detalles de mascota
+
+        // Detalles de mascota
         composable(
             route = "pet_detail/{petId}",
             arguments = listOf(navArgument("petId") { type = NavType.StringType })
@@ -183,39 +173,33 @@ fun UpetNavGraph(navController: NavHostController) {
             )
         }
 
+        // MÉTODOS DE PAGO CLIENTE
         composable("payment_methods") {
             PaymentMethodsScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onAddMethod = {
-                    navController.navigate("add_payment_method")
-                }
+                onAddMethod = { navController.navigate("add_payment_method") }
             )
         }
 
         composable("add_payment_method") {
             AddPaymentMethodScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onSuccess = {
-                    navController.popBackStack()
-                }
+                onSuccess = { navController.popBackStack() }
             )
         }
-        
+
+        // MÉTODOS DE PAGO WALKER
         composable("payment_methods_walker") {
             PaymentMethodsWalkerScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onAddMethod = {
-                    navController.navigate("add_payment_method_walker")
-                }
+                onAddMethod = { navController.navigate("add_payment_method_walker") }
             )
         }
-        
+
         composable("add_payment_method_walker") {
             AddPaymentMethodWalkerScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onSuccess = {
-                    navController.popBackStack()
-                }
+                onSuccess = { navController.popBackStack() }
             )
         }
 
@@ -223,21 +207,18 @@ fun UpetNavGraph(navController: NavHostController) {
         composable("pending_walks") {
             PendingWalksScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onWalkClick = { walkId ->
-                    navController.navigate("walk_detail/$walkId")
-                }
+                onWalkClick = { walkId -> navController.navigate("walk_detail/$walkId") }
             )
         }
-        
+
         // PASEOS ACTIVOS DEL CLIENTE
         composable("client_active_walks") {
-             ClientActiveWalksScreen(
-                 onNavigateBack = { navController.popBackStack() },
-                 onWalkClick = { walkId ->
-                     // Redirigir al mapa activo del cliente
-                     navController.navigate("client_active_map/$walkId")
-                 }
-             )
+            MyWalksScreen( // <--- CAMBIO AQUÍ: Llamamos a MyWalksScreen
+                onNavigateBack = { navController.popBackStack() },
+                onWalkClick = { walkId ->
+                    navController.navigate("client_active_map/$walkId")
+                }
+            )
         }
 
         // DETALLE PASEO (Genérico / Pendiente / Disponible)
@@ -245,15 +226,15 @@ fun UpetNavGraph(navController: NavHostController) {
             route = "walk_detail/{walkId}?isAvailable={isAvailable}",
             arguments = listOf(
                 navArgument("walkId") { type = NavType.StringType },
-                navArgument("isAvailable") { 
+                navArgument("isAvailable") {
                     type = NavType.BoolType
-                    defaultValue = false 
+                    defaultValue = false
                 }
             )
         ) { backStackEntry ->
             val walkId = backStackEntry.arguments?.getString("walkId") ?: return@composable
             val isAvailable = backStackEntry.arguments?.getBoolean("isAvailable") ?: false
-            
+
             WalkDetailScreen(
                 walkId = walkId,
                 isAvailable = isAvailable,
@@ -264,44 +245,24 @@ fun UpetNavGraph(navController: NavHostController) {
         // MAPA ACTIVO (CLIENTE)
         composable(
             route = "client_active_map/{walkId}",
-            arguments = listOf(
-                navArgument("walkId") {
-                    type = NavType.StringType
-                }
-            )
+            arguments = listOf(navArgument("walkId") { type = NavType.StringType })
         ) { backStackEntry ->
-
-            val walkId = backStackEntry.arguments
-                ?.getString("walkId")
-                ?: return@composable
-
+            val walkId = backStackEntry.arguments?.getString("walkId") ?: return@composable
             ClientActiveWalkMapScreen(
                 walkId = walkId,
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
         // MAPA ACTIVO (PASEADOR)
         composable(
             route = "walker_active_map/{walkId}",
-            arguments = listOf(
-                navArgument("walkId") {
-                    type = NavType.StringType
-                }
-            )
+            arguments = listOf(navArgument("walkId") { type = NavType.StringType })
         ) { backStackEntry ->
-
-            val walkId = backStackEntry.arguments
-                ?.getString("walkId")
-                ?: return@composable
-
+            val walkId = backStackEntry.arguments?.getString("walkId") ?: return@composable
             WalkerActiveWalkMapScreen(
                 walkId = walkId,
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

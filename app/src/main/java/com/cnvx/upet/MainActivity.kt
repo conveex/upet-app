@@ -6,10 +6,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
+import com.cnvx.upet.ui.theme.UPetTheme              // ← NUEVO
 import com.upet.data.local.datastore.TokenDataStore
 import com.upet.data.remote.ApiService
 import com.upet.data.remote.dto.UpdateFcmTokenRequest
@@ -34,36 +34,34 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Registrar el token FCM al iniciar la app
         fetchAndSendFcmToken()
 
         setContent {
+            UPetTheme {                              // ✅ envuelve todo el árbol
+                val navController = rememberNavController()
+                val token = runBlocking { tokenStore.getToken() }
+                val role = runBlocking { tokenStore.getRole() }
 
-            val navController = rememberNavController()
-            val token = runBlocking { tokenStore.getToken() }
-            val role = runBlocking { tokenStore.getRole() }
-
-            LaunchedEffect(Unit) {
-                if (token.isNullOrEmpty()) {
-                    // No hay sesión → ir al login
-                    navController.navigate(UpetScreen.Login.route) {
-                        popUpTo(0)
-                    }
-                } else {
-                    // Hay token → entrar según rol
-                    if (role == "client") {
-                        navController.navigate(UpetScreen.ClientHome.route) {
+                LaunchedEffect(Unit) {
+                    if (token.isNullOrEmpty()) {
+                        navController.navigate(UpetScreen.Login.route) {
                             popUpTo(0)
                         }
                     } else {
-                        navController.navigate(UpetScreen.WalkerHome.route) {
-                            popUpTo(0)
+                        if (role == "client") {
+                            navController.navigate(UpetScreen.ClientHome.route) {
+                                popUpTo(0)
+                            }
+                        } else {
+                            navController.navigate(UpetScreen.WalkerHome.route) {
+                                popUpTo(0)
+                            }
                         }
                     }
                 }
-            }
 
-            UpetNavGraph(navController)
+                UpetNavGraph(navController)
+            }
         }
     }
 
@@ -74,19 +72,17 @@ class MainActivity : ComponentActivity() {
                 return@OnCompleteListener
             }
 
-            // Get new FCM registration token
             val token = task.result
             Log.d("FCM", "Token actual: $token")
-            
-            // Enviar al backend si hay sesión
+
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     val userId = tokenStore.getUserId()
                     if (!userId.isNullOrEmpty()) {
-                         val response = api.updateFcmToken(UpdateFcmTokenRequest(token))
-                         if (response.isSuccessful && response.body()?.success == true) {
-                             Log.d("FCM", "Token enviado al backend en onCreate")
-                         }
+                        val response = api.updateFcmToken(UpdateFcmTokenRequest(token))
+                        if (response.isSuccessful && response.body()?.success == true) {
+                            Log.d("FCM", "Token enviado al backend en onCreate")
+                        }
                     }
                 } catch (e: Exception) {
                     Log.e("FCM", "Error enviando token en onCreate", e)

@@ -17,13 +17,11 @@ sealed class UpetScreen(val route: String) {
     object AddPet : UpetScreen("add_pet")
 
     //Walks
-    object MyWalks : UpetScreen("active_walks")
+    object MyWalks : UpetScreen("client_active_walks") // <--- CAMBIO AQUÍ para que coincida con el NavGraph
     object RequestWalk : UpetScreen("request_walk")
 
     //Pet Details
-        object PetDetail : UpetScreen("pet_detail/{petId}") {
-            fun createRoute(petId: String) = "pet_detail/$petId"
-        }
-
-
+    object PetDetail : UpetScreen("pet_detail/{petId}") {
+        fun createRoute(petId: String) = "pet_detail/$petId"
+    }
 }
